@@ -1,5 +1,5 @@
-#ifndef CACHE_HPP
-#define CACHE_HPP
+#ifndef CACHE_LAYER_HPP
+#define CACHE_LAYER_HPP
 
 #include <list>
 #include <systemc>
@@ -50,6 +50,14 @@ SC_MODULE(CACHE_LAYER) {
          (cacheline[offset + 1] << 8) |
          cacheline[offset];
   }
+
+  //help function for cache
+  uint8_t getCacheLineContent( uint32_t lineIndex, uint32_t index){
+    if(lineIndex<0 || lineIndex>cache_memory.size() || index<0 || index>cache_memory[lineIndex].data.size())
+      throw std::runtime_error("Index out of bound in getCacheLineContent method.\n");
+    return cache_memory[lineIndex].data[index];
+  }
+
 
   // Helper function to write data to a cacheline with the offset
   static void write_data(std::vector<uint8_t> cacheline, const uint32_t wdata_val, const uint32_t offset) {
@@ -129,6 +137,7 @@ SC_MODULE(CACHE_LAYER) {
   CACHE_LAYER(const sc_module_name &name, const uint32_t latency, const uint32_t num_lines, uint32_t cacheline_size, uint8_t mapping_strategy)
     : sc_module(name), latency(latency), num_lines(num_lines), cacheline_size(cacheline_size), mapping_strategy(mapping_strategy)
   {
+    //check if latency <0
     if (__builtin_popcount(cacheline_size) != 1 || __builtin_popcount(num_lines) != 1) {
       throw std::runtime_error("InvalidArgumentException: cacheline_size and num_lines must be powers of 2");
     }
