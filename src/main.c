@@ -116,19 +116,19 @@ int main(int argc, char** argv)
 
     struct stat sb;
     if (stat(filename, &sb) == -1){
-        printf("Access denied");
+        printf("Access denied\n");
         return EACCES;
     }
 
     if (!S_ISREG(sb.st_mode))
     {
-        printf("Not a regular file");
+        printf("Not a regular file\n");
         return EISDIR;
     }
 
     FILE *csv_file = fopen(filename, "r");
     if (!csv_file) {
-        printf("Error while opening file");
+        printf("Error while opening file\n");
         return EPERM;
     }   
 
