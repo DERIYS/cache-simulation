@@ -1,6 +1,6 @@
-#include"../include/simulation.hpp"
+#include"../include/simulation.h"
 
-Result run_simulation (
+struct Result run_simulation (
     uint32_t             cycles,
     const char*       tracefile,
     uint8_t      numCacheLevels,

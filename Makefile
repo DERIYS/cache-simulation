@@ -3,10 +3,10 @@
 # ---------------------------------------
 
 # entry point for the program and target name
-MAIN := src/main.c
+SRCS := src/main.c src/csv_parser.c
 
 # assignment task file
-HEADERS := include/simulation.hpp
+HEADERS := include/simulation.h include/csv_parser.h
 
 # target name
 TARGET := cache
@@ -48,8 +48,8 @@ release: CXXFLAGS += -O2
 release: $(TARGET)
 
 # recipe for building the program
-$(TARGET): $(MAIN) $(HEADERS)
-	$(CXX) $(LDFLAGS) -o $@ $(MAIN) $(CXXFLAGS)
+$(TARGET): $(SRCS) $(HEADERS)
+	$(CXX) $(LDFLAGS) -o $@ $(SRCS) $(CXXFLAGS)
 
 # clean up
 clean:
