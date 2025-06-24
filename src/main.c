@@ -166,14 +166,14 @@ int main(int argc, char** argv)
 
     fclose(csv_file);
 
-    free(requests);
-
     for (size_t i = 0; i < requests_size; i++) {
         printf("Request %zu: type=%s, addr = 0x%08X, data=0x%08X\n", i,
             requests[i].w ? "W" : "R",
             requests[i].addr,
             requests[i].data);
     }
+
+    free(requests);
 
     printf("Success\n");
 
