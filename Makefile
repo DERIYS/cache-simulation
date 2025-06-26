@@ -6,7 +6,7 @@
 SRCS := src/main.c src/csv_parser.c
 
 # assignment task file
-HEADERS := include/simulation.h include/csv_parser.h
+HEADERS := include/simulation.hpp include/csv_parser.h
 
 # target name
 TARGET := cache

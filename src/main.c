@@ -4,7 +4,8 @@
 #include <errno.h>
 #include <sys/stat.h>
 
-#include "../include/simulation.h"
+#include "../include/structs.h"
+#include "../include/simulation.hpp"
 #include "../include/csv_parser.h"
 
 extern void create_trace(const char* filename);

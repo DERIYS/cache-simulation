@@ -1,10 +1,12 @@
 #ifndef CSV_PARSER_H
 #define CSV_PARSER_H
 
-#include "simulation.h"
+#include "simulation.hpp"
 #include <stdio.h>
 #include <cstring>
 #include <cstdlib>
+#include "structs.h"
+
 
 #define PARSE_ERROR ((char*)-1)
 #define VALUE_ERROR (uint32_t)(-1)

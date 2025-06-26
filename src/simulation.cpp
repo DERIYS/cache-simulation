@@ -1,4 +1,4 @@
-#include"../include/simulation.h"
+#include"../include/simulation.hpp"
 
 struct Result run_simulation (
     uint32_t             cycles,
