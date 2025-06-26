@@ -3,10 +3,15 @@
 # ---------------------------------------
 
 # entry point for the program and target name
-SRCS := src/main.c src/csv_parser.c
+C_SRCS = src/main.c src/csv_parser.c
+CPP_SRCS = src/simulation.cpp
+
+# Object files
+C_OBJS = $(C_SRCS:.c=.o)
+CPP_OBJS = $(CPP_SRCS:.cpp=.o)
 
 # assignment task file
-HEADERS := include/simulation.hpp include/csv_parser.h
+HEADERS := simulation.hpp csv_parser.h structs.h
 
 # target name
 TARGET := cache
@@ -28,6 +33,11 @@ ifeq ($(strip $(CXX)),)
     $(error Neither clang++ nor g++ is available. Exiting.)
 endif
 
+CC := $(shell command -v gcc || command -v clang)
+ifeq ($(strip $(CC)),)
+    $(error Neither clang nor g is available. Exiting.)
+endif
+
 # Add rpath except for MacOS
 UNAME_S := $(shell uname -s)
 
@@ -39,6 +49,14 @@ endif
 # Default to release build for both app and library
 all: debug
 
+# Rule to compile .c files to .o files
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Rule to compile .cpp files to .o files
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
 # Debug build
 debug: CXXFLAGS += -g
 debug: $(TARGET)
@@ -47,12 +65,13 @@ debug: $(TARGET)
 release: CXXFLAGS += -O2
 release: $(TARGET)
 
-# recipe for building the program
-$(TARGET): $(SRCS) $(HEADERS)
-	$(CXX) $(LDFLAGS) -o $@ $(SRCS) $(CXXFLAGS)
+# Rule to link object files to executable
+$(TARGET): $(C_OBJS) $(CPP_OBJS)
+	$(CXX) $(CXXFLAGS) $(C_OBJS) $(CPP_OBJS) $(LDFLAGS) -o $(TARGET)
 
 # clean up
 clean:
 	rm -f $(TARGET)
+	rm -rf *.o
 
 .PHONY: all debug release clean

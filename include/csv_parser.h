@@ -3,8 +3,9 @@
 
 #include "simulation.hpp"
 #include <stdio.h>
-#include <cstring>
-#include <cstdlib>
+#include <stdbool.h>
+#include <string.h>
+#include <stdlib.h>
 #include "structs.h"
 
 

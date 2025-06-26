@@ -15,4 +15,7 @@ struct Result run_simulation (
     uint32_t        numRequests,
     struct Request*    requests
 ) 
-{/*TODO*/}
+{
+    /*TODO*/
+    return Result{};
+}
