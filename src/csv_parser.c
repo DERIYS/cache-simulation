@@ -8,6 +8,16 @@ char* split_next_line(const char* content, char* type, char* address, char* data
     char* line_copy = strndup(content, line_len);
     if (!line_copy) return NULL;
 
+    int comma_count = 0;
+    for (size_t i = 0; i < line_len; i++){
+        if (content[i] == ',') comma_count++;
+    }
+    if (comma_count < 2){
+        printf("Missing fields: less than 3 columns\n");
+        free(line_copy);
+        return PARSE_ERROR;
+    }
+
     const char* delimiters = " ,";
 
     char* token = strtok(line_copy, delimiters);
@@ -78,7 +88,7 @@ unsigned long countRequests(char* content)
 uint32_t validateValue(char* someValue)
 {
     char* isEnd;
-    int value;
+    long value;
     if (strncmp(someValue, "0x", 2) == 0){
         value = strtol(someValue,&isEnd,16);
     } 
@@ -88,6 +98,11 @@ uint32_t validateValue(char* someValue)
     if (*isEnd != '\0')
     {
         printf("Failed to parse value\n");
+        return VALUE_ERROR;
+    }
+
+    if (value < 0) {
+        printf("Negative data is not allowed");
         return VALUE_ERROR;
     }
 
@@ -127,6 +142,11 @@ struct Request formSingleRequest(char* type, char* address, char* data, bool* ok
     } else if (isR) {
         //nothing?  
     } else {
+        if (*data == '\0'){
+            printf("Missing data for write request\n");
+            return req;
+        }
+
         req_data = validateValue(data);
 
         if (req_data == VALUE_ERROR){

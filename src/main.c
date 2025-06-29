@@ -16,46 +16,53 @@ int main(int argc, char** argv)
     static struct option long_options[] = {
         {"cycles"          , required_argument, 0, 'c'},
         {"tf"              , optional_argument, 0, 'f'},
-        {"help"            , optional_argument, 0, 'h'},
-        {"cacheline-size"  , optional_argument, 0, 'C'},
-        {"num-lines-l1"    , optional_argument, 0, '1'},
-        {"num-lines-l2"    , optional_argument, 0, '2'},
-        {"num-lines-l3"    , optional_argument, 0, '3'},
-        {"latency-cache-l1", optional_argument, 0, 'l'},
-        {"latency-cache-l2", optional_argument, 0, 'a'},
-        {"latency-cache-l3", optional_argument, 0, 't'},
-        {"num-cache-levels", optional_argument, 0, 'L'},
-        {"mapping-strategy", optional_argument, 0, 'S'},
+        {"help"            , no_argument, 0, 'h'},
+        {"cacheline-size"  , required_argument, 0, 'C'},
+        {"num-lines-l1"    , required_argument, 0, '1'},
+        {"num-lines-l2"    , required_argument, 0, '2'},
+        {"num-lines-l3"    , required_argument, 0, '3'},
+        {"latency-cache-l1", required_argument, 0, 'l'},
+        {"latency-cache-l2", required_argument, 0, 'a'},
+        {"latency-cache-l3", required_argument, 0, 't'},
+        {"num-cache-levels", required_argument, 0, 'L'},
+        {"mapping-strategy", required_argument, 0, 'S'},
         {0                 , 0                , 0,  0 }
     };   
 
-    uint32_t * cycles           = NULL;
-    uint32_t * cacheLineSize    = NULL;
-    uint32_t * numLinesL1       = NULL;
-    uint32_t * numLinesL2       = NULL;
-    uint32_t * numLinesL3       = NULL;
-    uint32_t * latencyCacheL1   = NULL;
-    uint32_t * latencyCacheL2   = NULL;
-    uint32_t * latencyCacheL3   = NULL;
-    uint8_t  * numCacheLevels   = NULL;
-    uint8_t  * mappingStrategy  = NULL;
+    uint32_t  cycles           = CYCLES;
+    uint32_t  cachelineSize    = CACHE_LINE_SIZE;
+    uint32_t  numLinesL1       = NUM_LINES_L1;
+    uint32_t  numLinesL2       = NUM_LINES_L2;
+    uint32_t  numLinesL3       = NUM_LINES_L3;
+    uint32_t  latencyCacheL1   = LATENCY_CACHE_L1;
+    uint32_t  latencyCacheL2   = LATENCY_CACHE_L2;
+    uint32_t  latencyCacheL3   = LATENCY_CACHE_L3;
+    uint8_t   numCacheLevels   = NUM_CACHE_LEVELS;
+    uint8_t   mappingStrategy  = MAPPING_STRATEGY;
 
-    printf("STAGE 0\n");
+    char*     traceFileName    = NULL;
 
     int opt;
     int option_index = 0;
-    while ((opt = getopt_long(argc,argv, "c:f:h:C:1:2:3:l:a:t:L:S", long_options, &option_index)) != -1)
+    while ((opt = getopt_long(argc,argv, "c:f:h:C:1:2:3:l:a:t:L:S:", long_options, &option_index)) != -1)
     {
+        char* endptr;
 
         switch (opt)
         {
             //STANDART OPTIONS
             case 'c':
-                //TODO
+                cycles = (uint32_t) strtoul(optarg, &endptr, 10);
+
+                if (*endptr != '\0' || cycles <= 0) {
+                    fprintf(stderr, "Invalid cycles value: %s\n", optarg);
+                    return 1;
+                }
+
                 printf("Cycles set\n");
                 break;
             case 'f':
-                //TODO
+                traceFileName = optarg;
                 printf("Tracefile set\n");
                 break;
             case 'h':
@@ -65,38 +72,94 @@ int main(int argc, char** argv)
 
             //ADVANCED OPTIONS
             case 'C':
-                //TODO
+                cachelineSize = (uint32_t) strtoul(optarg, &endptr, 10);
+
+                if (*endptr != '\0' || cachelineSize <= 0) {
+                    fprintf(stderr, "Invalid cache line size value: %s\n", optarg);
+                    return 1;
+                }          
+
                 printf("Cacheline size set\n");
                 break;
             case '1':
-                //TODO
+                numLinesL1 = (uint32_t) strtoul(optarg, &endptr, 10);
+
+                if (*endptr != '\0' || numLinesL1 <= 0) {
+                    fprintf(stderr, "Invalid number of lines L1: %s\n", optarg);
+                    return 1;
+                }
+          
                 printf("Cache L1 lines set\n");
                 break;
             case '2':
-                //TODO
+                numLinesL2 = (uint32_t) strtoul(optarg, &endptr, 10);
+
+                if (*endptr != '\0' || numLinesL2 <= 0) {
+                    fprintf(stderr, "Invalid number of lines L2: %s\n", optarg);
+                    return 1;
+                }
+
                 printf("Cache L2 lines set\n");
                 break;
             case '3':
-                //TODO
+                numLinesL3 = (uint32_t) strtoul(optarg, &endptr, 10);
+
+                if (*endptr != '\0' || numLinesL3 <= 0) {
+                    fprintf(stderr, "Invalid number of lines L3: %s\n", optarg);
+                    return 1;
+                }
+
                 printf("Cache L3 lines set\n");
                 break;
             case 'l':
-                //TODO
+                latencyCacheL1 = (uint32_t) strtoul(optarg, &endptr, 10);
+
+                if (*endptr != '\0' || latencyCacheL1 <= 0) {
+                    fprintf(stderr, "Invalid L1 latency value: %s\n", optarg);
+                    return 1;
+                }
+
                 printf("Cache L1 latency set\n");
                 break;
             case 'a':
-                //TODO
+                latencyCacheL2 = (uint32_t) strtoul(optarg, &endptr, 10);
+
+                if (*endptr != '\0' || latencyCacheL2 <= 0) {
+                    fprintf(stderr, "Invalid L2 latency value: %s\n", optarg);
+                    return 1;
+                }                 
                 printf("Cache L2 latency set\n");
                 break;
             case 't':
-                //TODO
+                latencyCacheL3 = (uint32_t) strtoul(optarg, &endptr, 10);
+
+                if (*endptr != '\0' || latencyCacheL3 <= 0) {
+                    fprintf(stderr, "Invalid L3 latency value: %s\n", optarg);
+                    return 1;
+                }   
+
                 printf("Cache L3 latency set\n");
                 break;
             case 'L':
+                numCacheLevels = (uint8_t) strtoul(optarg, &endptr, 10);
+
+                if (*endptr != '\0' || numCacheLevels <= 0) {
+                    fprintf(stderr, "Invalid number of cache levels %s\n", optarg);
+                    return 1;
+                }
+
                 printf("Cache levels set\n");
                 break;
             case 'S':
-                printf("Cache levels set\n");
+                unsigned long tmp = strtoul(optarg, &endptr, 10);  
+
+                if (*endptr != '\0' || tmp > 2 || tmp <= 0) {
+                    fprintf(stderr, "Invalid value for mapping strategy %s\n", optarg);
+                    return 1;
+                }
+                mappingStrategy = (uint8_t) tmp;
+
+                printf("Mapping strategy set\n");
                 break;
             case '?':
                 //TODO
@@ -104,9 +167,7 @@ int main(int argc, char** argv)
         }
     }
 
-    printf("STAGE 1\n");
-
-    if (optind > argc) {
+    if (optind >= argc) {
         //TODO
         //no input file
         printf("No input file\n");
@@ -133,8 +194,6 @@ int main(int argc, char** argv)
         return EPERM;
     }   
 
-    printf("STAGE 2\n");
-
     char ch;
     char * content = NULL;
     size_t size = 0;
@@ -148,13 +207,9 @@ int main(int argc, char** argv)
     }
     content[size] = '\0';
 
-    printf("STAGE 3\n");
-
-    size_t requests_size = countRequests(content);
+    uint32_t requests_size = countRequests(content);
 
     struct Request* requests = (struct Request*) calloc(requests_size, sizeof(struct Request));
-
-    printf("STAGE 4\n");
 
     int err;
     err = formRequests(content, requests);
@@ -162,8 +217,6 @@ int main(int argc, char** argv)
         printf("Failed to parse CSV\n");
         return EPERM;
     }
-
-    printf("STAGE 5\n");
 
     fclose(csv_file);
 
@@ -173,12 +226,29 @@ int main(int argc, char** argv)
             requests[i].addr,
             requests[i].data);
     }
+    
+    run_simulation(
+                cycles,
+         traceFileName, /*tracefile*/ 
+        numCacheLevels,
+         cachelineSize,
+            numLinesL1,
+            numLinesL2,
+            numLinesL3,
+        latencyCacheL1,
+        latencyCacheL2,
+        latencyCacheL3,
+       mappingStrategy,
+         requests_size,
+              requests
+    );
 
     free(requests);
+    free(content);
 
     printf("Success\n");
 
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 int sc_main(int argc, char* argv[])

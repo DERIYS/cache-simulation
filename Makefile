@@ -6,12 +6,14 @@
 C_SRCS = src/main.c src/csv_parser.c
 CPP_SRCS = src/simulation.cpp
 
+CFLAGS := -I$(SCPATH)/include -L$(SCPATH)/lib
+
 # Object files
 C_OBJS = $(C_SRCS:.c=.o)
 CPP_OBJS = $(CPP_SRCS:.cpp=.o)
 
 # assignment task file
-HEADERS := simulation.hpp csv_parser.h structs.h
+HEADERS := simulation.hpp csv_parser.h structs.h cache.hpp multiplexer.hpp cache_layer.hpp main_memory.hpp
 
 # target name
 TARGET := cache
@@ -58,6 +60,7 @@ all: debug
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 # Debug build
+debug: CFLAGS += -g
 debug: CXXFLAGS += -g
 debug: $(TARGET)
 
@@ -69,9 +72,22 @@ release: $(TARGET)
 $(TARGET): $(C_OBJS) $(CPP_OBJS)
 	$(CXX) $(CXXFLAGS) $(C_OBJS) $(CPP_OBJS) $(LDFLAGS) -o $(TARGET)
 
+COVERAGE_FLAGS = -fprofile-arcs -ftest-coverage
+
+coverage: CFLAGS += $(COVERAGE_FLAGS)
+coverage: CXXFLAGS += $(COVERAGE_FLAGS)
+coverage: LDFLAGS += $(COVERAGE_FLAGS) -lgcov
+coverage: $(TARGET)
+
+coverage-report:
+	lcov --capture --directory . --output-file coverage.info
+	genhtml coverage.info --output-directory coverage-report
+
 # clean up
 clean:
 	rm -f $(TARGET)
-	rm -rf *.o
+	rm -rf $(C_OBJS) $(CPP_OBJS)
+	rm -f src/*.gcda src/*.gcno coverage.info
+	rm -rf coverage-report
 
 .PHONY: all debug release clean

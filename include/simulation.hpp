@@ -3,6 +3,10 @@
 
 #include "structs.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct Result run_simulation (
     uint32_t             cycles,
     const char*       tracefile,
@@ -18,5 +22,9 @@ struct Result run_simulation (
     uint32_t        numRequests,
     struct Request*    requests
 );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // SIMULATION_HPP
