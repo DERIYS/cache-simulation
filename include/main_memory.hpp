@@ -5,7 +5,7 @@
 #include <map>
 using namespace sc_core;
 
-#define LATENCY 100
+#define LATENCY 1
 
 SC_MODULE(MAIN_MEMORY) {
   sc_in<bool> clk;
@@ -28,7 +28,6 @@ SC_MODULE(MAIN_MEMORY) {
   void behaviour() {
     while(true) {
       wait();
-
       if (r.read()) {
         doRead(w.read());
       }
@@ -43,9 +42,9 @@ SC_MODULE(MAIN_MEMORY) {
 
     uint32_t result = get(addr.read());
 
-    for(int i = 0; i < LATENCY; i++) {
-      wait();
-    }
+    // for(int i = 0; i < LATENCY; i++) {
+    //   wait();
+    // }
 
     rdata.write(result);
     if(!dontSetReady) {
@@ -57,9 +56,9 @@ SC_MODULE(MAIN_MEMORY) {
     ready.write(false);
     set(addr.read(), wdata.read());
 
-    for(int i = 0; i < LATENCY; i++) {
-      wait();
-    }
+    // for(int i = 0; i < LATENCY; i++) {
+    //   wait();
+    // }
 
     ready.write(true);
   }
@@ -78,14 +77,34 @@ SC_MODULE(MAIN_MEMORY) {
     return result;
   }
 
+
+
   void set(uint32_t address, uint32_t value) {
     for (int i = 0; i < 4; i++) {
       memory[address + i] = (value >> (i * 8)) & 0xFF;
+      // std::cout << "mem[0x" << std::hex << (address+i)
+      //         << "] = 0x" << (int)memory[address+i] << std::endl;
       if(address + i == UINT32_MAX) {
         break;
       }
     }
   }
+
+  //get whole cache line wenn cache miss
+  std::vector<uint8_t> getCacheLine(uint32_t address, uint32_t cacheLineSize){
+    if(cacheLineSize==0) throw std::runtime_error("Dividing by zero in getCacheLine.\n");
+    uint32_t start=address - (address/cacheLineSize);
+    std::vector<uint8_t> result(cacheLineSize);
+    for(int i=0;i<cacheLineSize;i++){
+      uint8_t value = 0;
+      if(memory.find(address + i) != memory.end()) {
+        value = memory[address + i];
+      }
+      result[i]=value;
+    }
+    return result;
+  }
+
 };
 
 #endif // MAIN_MEMORY_HPP

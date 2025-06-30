@@ -6,6 +6,33 @@
 #include <stdint.h>
 using namespace sc_core;
 
+SC_MODULE(MULTIPLEXER_BOOLEAN) {
+  std::vector<sc_in<bool>> in;
+  sc_in<uint8_t> select;
+
+  std::vector<sc_out<bool>> out;
+
+  SC_CTOR(MULTIPLEXER_BOOLEAN);
+  MULTIPLEXER_BOOLEAN(sc_module_name name, uint8_t fanIn, uint8_t fanOut) : sc_module(name), in(fanIn), out(fanOut) {
+    SC_THREAD(behaviour);
+    sensitive << select;
+
+    for(int i = 0; i < fanIn; i++) {
+      sensitive << in[i];
+    }
+  }
+
+  void behaviour() {
+    while(true) {
+      uint8_t selectValue = select.read();
+      bool selected = selectValue < in.size() ? in[selectValue].read() : 0;
+      for (size_t i = 0; i < out.size(); i++) {
+        out[i].write(selected);
+      }
+      wait();
+    }
+  }
+};
 
 SC_MODULE(MULTIPLEXER_I32) {
   std::vector<sc_in<uint32_t>> in;

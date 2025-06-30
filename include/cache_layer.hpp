@@ -40,6 +40,19 @@ SC_MODULE(CACHE_LAYER)
   std::list<uint32_t> lru_list;                                        // Indexes of cache_memory in LRU order (head: MRU, tail: LRU)
   std::unordered_map<uint32_t, std::list<uint32_t>::iterator> lru_map; // Maps tag to lru_list node
 
+
+  //just for testing, can be deleted spater 
+  void print(int l){
+    std::cout<<"L: "<<l<<"\n";
+    for(int i=0;i<num_lines;i++){
+      for(int j=0;j<cacheline_size;j++){
+        std::cout << " " << std::hex <<(int)cache_memory[i].data[j] ;
+        if((j+1)%4==0) cout<<"|";
+      }
+     std::cout<<"\n";
+    }
+  }
+
   // Helper function to set offset, (index), and tag values
   void set_offset_index_tag(const uint32_t address, uint32_t *offset, uint32_t *index, uint32_t &tag)
   {
