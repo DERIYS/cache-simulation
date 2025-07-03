@@ -22,15 +22,14 @@ SC_MODULE(CACHE_LAYER)
   sc_in<uint32_t> addr, wdata;
   sc_in<bool> clk, r, w;
 
-  sc_out<bool> hit, ready;
+  sc_out<bool> miss, ready;
   sc_out<uint32_t> data;
-  sc_out<bool> error_occurred;
 
   uint32_t latency, num_lines, cacheline_size;
   uint8_t mapping_strategy;
 
   bool test_mode = false; // If true, the cache is in test mode and does not throw exceptions
-  bool error = false; // If true, the cache has encountered an error
+  bool error = false;     // If true, the cache has encountered an error
 
   // Number of actually occupied cache lines.
   // Used only with fully-associative mapping strategy to pick an index for new cacheline or determining if the memory is full
@@ -40,16 +39,19 @@ SC_MODULE(CACHE_LAYER)
   std::list<uint32_t> lru_list;                                        // Indexes of cache_memory in LRU order (head: MRU, tail: LRU)
   std::unordered_map<uint32_t, std::list<uint32_t>::iterator> lru_map; // Maps tag to lru_list node
 
-
-  //just for testing, can be deleted spater 
-  void print(int l){
-    std::cout<<"L: "<<l<<"\n";
-    for(int i=0;i<num_lines;i++){
-      for(int j=0;j<cacheline_size;j++){
-        std::cout << " " << std::hex <<(int)cache_memory[i].data[j] ;
-        if((j+1)%4==0) cout<<"|";
+  // just for testing, can be deleted spater
+  void print(int l)
+  {
+    std::cout << "L: " << l << "\n";
+    for (int i = 0; i < num_lines; i++)
+    {
+      for (int j = 0; j < cacheline_size; j++)
+      {
+        std::cout << " " << std::hex << (int)cache_memory[i].data[j];
+        if ((j + 1) % 4 == 0)
+          cout << "|";
       }
-     std::cout<<"\n";
+      std::cout << "\n";
     }
   }
 
@@ -65,7 +67,8 @@ SC_MODULE(CACHE_LAYER)
       if (*offset + 3 >= cacheline_size)
       {
         error = true;
-        if (!test_mode) throw std::runtime_error("InvalidAddressException: Invalid offset for 4-byte access in set_offset_index_tag");
+        if (!test_mode)
+          throw std::runtime_error("InvalidAddressException: Invalid offset for 4-byte access in set_offset_index_tag");
         return;
       }
     }
@@ -91,13 +94,15 @@ SC_MODULE(CACHE_LAYER)
     if (line_index >= cache_memory.size())
     {
       error = true;
-      if (!test_mode) throw std::runtime_error("Line index out of bounds in getCacheLineContent method.\n");
+      if (!test_mode)
+        throw std::runtime_error("Line index out of bounds in getCacheLineContent method.\n");
       return 0; // Return 0 or some default value to avoid undefined behavior
     }
     if (index >= cache_memory[line_index].data.size())
     {
       error = true;
-      if (!test_mode) throw std::runtime_error("Data index out of bounds in getCacheLineContent method.\n");
+      if (!test_mode)
+        throw std::runtime_error("Data index out of bounds in getCacheLineContent method.\n");
       return 0; // Return 0 or some default value to avoid undefined behavior
     }
     return cache_memory[line_index].data[index];
@@ -109,7 +114,8 @@ SC_MODULE(CACHE_LAYER)
     if (offset + 3 >= cacheline.size())
     {
       error = true;
-      if (!test_mode) throw std::runtime_error("InvalidAddressException: Invalid offset for 4-byte access in write_data");
+      if (!test_mode)
+        throw std::runtime_error("InvalidAddressException: Invalid offset for 4-byte access in write_data");
     }
 
     cacheline[offset] = wdata_val & 0xFF;
@@ -128,7 +134,7 @@ SC_MODULE(CACHE_LAYER)
 
     if (mapping_strategy == DIRECT_MAPPED)
     { // Direct-mapped
-      uint32_t offset, direct_index;
+      uint32_t direct_index;
       set_offset_index_tag(addr, nullptr, &direct_index, tag);
       cache_memory[direct_index] = {tag, true, mem_data};
     }
@@ -151,7 +157,8 @@ SC_MODULE(CACHE_LAYER)
     else
     {
       error = true;
-      if (!test_mode) throw std::runtime_error("Invalid mapping_strategy in write_data_from_main_memory");
+      if (!test_mode)
+        throw std::runtime_error("Invalid mapping_strategy in write_data_from_main_memory");
       return;
     }
   }
@@ -162,9 +169,9 @@ SC_MODULE(CACHE_LAYER)
     uint32_t offset, index, tag;
     set_offset_index_tag(addr.read(), &offset, &index, tag);
 
-    if (cache_memory[index].valid && cache_memory[index].tag == tag)
+    if (!error && cache_memory[index].valid && cache_memory[index].tag == tag)
     { // Cache hit
-      hit.write(true);
+      miss.write(false);
       if (r.read())
         data.write(extract_word(cache_memory[index].data, offset));
       if (w.read())
@@ -175,7 +182,7 @@ SC_MODULE(CACHE_LAYER)
     //   cout << "Cache miss at index: " << index << ", tag: " << std::hex << tag << std::dec << endl;
     //   cout << cache_memory[index].valid << " " << hex << cache_memory[index].tag << dec << endl;
     // }
-    hit.write(false);
+    miss.write(true);
   }
 
   // Called with every clock tick if the layer's mapping strategy is fully-associative
@@ -185,7 +192,7 @@ SC_MODULE(CACHE_LAYER)
     set_offset_index_tag(addr.read(), &offset, nullptr, tag);
 
     auto it = lru_map.find(tag);
-    if (it != lru_map.end())
+    if (!error && it != lru_map.end())
     { // tag in lru_map -> cache hit
       // Move the according node in lru_list to the beginning and update the map value
       uint32_t index = *it->second;    // this extracts the index of the needed cacheline from the map
@@ -193,14 +200,22 @@ SC_MODULE(CACHE_LAYER)
       lru_list.push_front(index);      // pushing it to the beginning
       lru_map[tag] = lru_list.begin(); // updating the map
 
-      hit.write(true);
+      miss.write(false);
       if (r.read())
         data.write(extract_word(cache_memory[index].data, offset));
       if (w.read())
         write_data(cache_memory[index].data, wdata.read(), offset);
       return;
     }
-    hit.write(false);
+    miss.write(true);
+  }
+
+  // Reset the signals at before every access
+  void reset_signals()
+  {
+    ready.write(false);
+    error = false;
+    // other signals can be reset here if needed
   }
 
   void behaviour()
@@ -210,10 +225,9 @@ SC_MODULE(CACHE_LAYER)
       // Latency will be handled in the main cache.hpp systemc module as it is impossible to communicate with other cache levels inside this module
       // to ensure that the right cache layer's latency will be waited (L1 level latency if found in L1, L2 if in L2 etc.)
       wait();
-      error = false; // Reset error state at the beginning of each clock cycle
+      reset_signals();
       if (r.read() || w.read())
       {
-        ready.write(false);
         if (mapping_strategy == DIRECT_MAPPED)
           access_direct_mapped();
         else if (mapping_strategy == FULLY_ASSOCIATIVE)
@@ -221,10 +235,10 @@ SC_MODULE(CACHE_LAYER)
         else
         {
           error = true;
-          if (!test_mode) throw std::runtime_error("Invalid mapping_strategy");
+          if (!test_mode)
+            throw std::runtime_error("Invalid mapping_strategy");
           return;
         }
-        error_occurred.write(error);
         ready.write(true);
       }
     }
@@ -237,13 +251,15 @@ SC_MODULE(CACHE_LAYER)
   {
     if (__builtin_popcount(cacheline_size) != 1 || __builtin_popcount(num_lines) != 1)
     {
-      if (!test_mode) throw std::runtime_error("InvalidArgumentException: cacheline_size and num_lines must be powers of 2");
+      if (!test_mode)
+        throw std::runtime_error("InvalidArgumentException: cacheline_size and num_lines must be powers of 2");
       return;
     }
 
     if (mapping_strategy == FULLY_ASSOCIATIVE)
       size = 0;
     cache_memory.resize(num_lines, {0, false, std::vector<uint8_t>(cacheline_size)});
+
     SC_THREAD(behaviour);
     sensitive << clk.pos();
   }
