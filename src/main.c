@@ -52,7 +52,7 @@ int main(int argc, char** argv)
        Supports both long (--cycles, --tf) and short (-c, -f) options.  */
     int opt;
     int option_index = 0;
-    while ((opt = getopt_long(argc,argv, "c:f:h:C:L:M:N:l:m:n:e:S:d", long_options, &option_index)) != -1)
+    while ((opt = getopt_long(argc,argv, "c:f:h:C:L:M:N:l:m:n:e:S:d:", long_options, &option_index)) != -1)
     {
 
         /* Handle each option using its long/short flag. 
