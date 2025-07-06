@@ -56,7 +56,7 @@ class CacheProgramTests(unittest.TestCase):
 
     def test_set_cacheline_and_levels(self):
         result = self.run_cache([
-            "-d",
+            "--debug",
             "-C", "64",
             "-L", "128",
             "-M", "256",
