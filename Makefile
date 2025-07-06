@@ -3,7 +3,7 @@
 # ---------------------------------------
 
 # entry point for the program and target name
-C_SRCS = src/main.c src/csv_parser.c
+C_SRCS = src/main.c src/csv_parser.c src/numeric_parser.c util/helper_functions.c
 CPP_SRCS = src/simulation.cpp
 
 CFLAGS := -I$(SCPATH)/include -L$(SCPATH)/lib
@@ -13,7 +13,7 @@ C_OBJS = $(C_SRCS:.c=.o)
 CPP_OBJS = $(CPP_SRCS:.cpp=.o)
 
 # assignment task file
-HEADERS := simulation.hpp csv_parser.h structs.h cache.hpp multiplexer.hpp cache_layer.hpp main_memory.hpp
+HEADERS := helper_functions.h simulation.hpp csv_parser.h structs.h numeric_parser.h cache.hpp multiplexer.hpp cache_layer.hpp main_memory.hpp
 
 # target name
 TARGET := cache

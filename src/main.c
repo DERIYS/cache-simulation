@@ -2,33 +2,40 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <sysexits.h>
 #include <sys/stat.h>
 
 #include "../include/structs.h"
 #include "../include/simulation.hpp"
 #include "../include/csv_parser.h"
+#include "../include/numeric_parser.h"
+#include "../include/helper_functions.h"
+#include "../include/debug.h"
 
-extern void create_trace(const char* filename);
-extern void close_trace();
+/* Debug flag */
+bool debug = false;
 
 int main(int argc, char** argv)
 {
+    /* Supported long options for CLI parsing */
     static struct option long_options[] = {
         {"cycles"          , required_argument, 0, 'c'},
         {"tf"              , optional_argument, 0, 'f'},
-        {"help"            , no_argument, 0, 'h'},
+        {"help"            , no_argument,       0, 'h'},
         {"cacheline-size"  , required_argument, 0, 'C'},
-        {"num-lines-l1"    , required_argument, 0, '1'},
-        {"num-lines-l2"    , required_argument, 0, '2'},
-        {"num-lines-l3"    , required_argument, 0, '3'},
+        {"num-lines-l1"    , required_argument, 0, 'L'},
+        {"num-lines-l2"    , required_argument, 0, 'M'},
+        {"num-lines-l3"    , required_argument, 0, 'N'},
         {"latency-cache-l1", required_argument, 0, 'l'},
-        {"latency-cache-l2", required_argument, 0, 'a'},
-        {"latency-cache-l3", required_argument, 0, 't'},
-        {"num-cache-levels", required_argument, 0, 'L'},
+        {"latency-cache-l2", required_argument, 0, 'm'},
+        {"latency-cache-l3", required_argument, 0, 'n'},
+        {"num-cache-levels", required_argument, 0, 'e'},
         {"mapping-strategy", required_argument, 0, 'S'},
+        {"debug"           , no_argument      , 0, 'd'},
         {0                 , 0                , 0,  0 }
     };   
 
+    /* Default simultaion values */
     uint32_t  cycles           = CYCLES;
     uint32_t  cachelineSize    = CACHE_LINE_SIZE;
     uint32_t  numLinesL1       = NUM_LINES_L1;
@@ -39,194 +46,208 @@ int main(int argc, char** argv)
     uint32_t  latencyCacheL3   = LATENCY_CACHE_L3;
     uint8_t   numCacheLevels   = NUM_CACHE_LEVELS;
     uint8_t   mappingStrategy  = MAPPING_STRATEGY;
-
     char*     traceFileName    = NULL;
 
+    /* Parse CLI options using getopt_long.
+       Supports both long (--cycles, --tf) and short (-c, -f) options.  */
     int opt;
     int option_index = 0;
-    while ((opt = getopt_long(argc,argv, "c:f:h:C:1:2:3:l:a:t:L:S:", long_options, &option_index)) != -1)
+    while ((opt = getopt_long(argc,argv, "c:f:h:C:L:M:N:l:m:n:e:S:d", long_options, &option_index)) != -1)
     {
-        char* endptr;
+
+        /* Handle each option using its long/short flag. 
+           All numeric inputs are validated and rejected in the case of negative values or invalid formats.
+           Programm exits with meaningfull error. */
+
+        /* Attention: following options parsing for numeric values heavily relies on parseUnsignedInt function.
+                      For a better understanding of its usage and behaviour please check src/numeric_parser.c  */
 
         switch (opt)
         {
-            //STANDART OPTIONS
-            case 'c':
-                cycles = (uint32_t) strtoul(optarg, &endptr, 10);
+            /* Standart options */
 
-                if (*endptr != '\0' || cycles <= 0) {
-                    fprintf(stderr, "Invalid cycles value: %s\n", optarg);
-                    return 1;
+            /* Parse and validate cycles, and pass it to simulation parametrs */
+            case 'c':
+
+                /* Passes argument for verification, cycles as uint32, where the argument will be stored, and string indicating error, if needed */
+                if (!parseUnsignedInt(optarg, IS_32BIT, &cycles, "cycles value.")) {
+                    return EX_DATAERR;
                 }
 
-                printf("Cycles set\n");
+                DEBUG_PRINT("Cycles set\n");
                 break;
+            
+            /* Tracefile specified. It should be created during simulation */
             case 'f':
                 traceFileName = optarg;
-                printf("Tracefile set\n");
+                DEBUG_PRINT("Tracefile set\n");
                 break;
+
+            /* Help flag. When this option is set, print helpful message for application usage */
             case 'h':
-                //TODO
-                printf("Help\n");
-                return 0;
 
-            //ADVANCED OPTIONS
+                print_help();
+
+                return EXIT_SUCCESS;
+
+            /* ADVANCED OPTIONS */
+
+            /* Parse and validate cache line size, and pass it to simulation paramets afterwards */
             case 'C':
-                cachelineSize = (uint32_t) strtoul(optarg, &endptr, 10);
 
-                if (*endptr != '\0' || cachelineSize <= 0) {
-                    fprintf(stderr, "Invalid cache line size value: %s\n", optarg);
-                    return 1;
-                }          
+                /* Passes argument for verification, cachelineSize as uint32, where the argument will be stored, and string indicating error, if needed */
+                if (!parseUnsignedInt(optarg, IS_32BIT, &cachelineSize, "cache line size.")) {
+                    return EX_DATAERR;
+                }
 
-                printf("Cacheline size set\n");
+                DEBUG_PRINT("Cacheline size set\n");
                 break;
-            case '1':
-                numLinesL1 = (uint32_t) strtoul(optarg, &endptr, 10);
 
-                if (*endptr != '\0' || numLinesL1 <= 0) {
-                    fprintf(stderr, "Invalid number of lines L1: %s\n", optarg);
-                    return 1;
+            /* Parse and validate cache L1 number of lines, and pass it to simulation paramets afterwards */
+            case 'L':
+                
+                /* Passes argument for verification, numLinesL1 as uint32, where the argument will be stored, and string indicating error, if needed */
+                if (!parseUnsignedInt(optarg, IS_32BIT, &numLinesL1, "cache L1 line value.")) {
+                    return EX_DATAERR;
                 }
           
-                printf("Cache L1 lines set\n");
+                DEBUG_PRINT("Cache L1 lines set\n");
                 break;
-            case '2':
-                numLinesL2 = (uint32_t) strtoul(optarg, &endptr, 10);
 
-                if (*endptr != '\0' || numLinesL2 <= 0) {
-                    fprintf(stderr, "Invalid number of lines L2: %s\n", optarg);
-                    return 1;
+            /* Parse and validate cache L2 number of lines, and pass it to simulation paramets afterwards */
+            case 'M':
+                
+                /* Passes argument for verification, numLinesL2 as uint32, where the argument will be stored, and string indicating error, if needed */
+                if (!parseUnsignedInt(optarg, IS_32BIT , &numLinesL2, "cache L2 line value.")) {
+                    return EX_DATAERR;
                 }
 
-                printf("Cache L2 lines set\n");
+                DEBUG_PRINT("Cache L2 lines set\n");
                 break;
-            case '3':
-                numLinesL3 = (uint32_t) strtoul(optarg, &endptr, 10);
-
-                if (*endptr != '\0' || numLinesL3 <= 0) {
-                    fprintf(stderr, "Invalid number of lines L3: %s\n", optarg);
-                    return 1;
+        
+            /* Parse and validate cache L3 number of lines, and pass it to simulation paramets afterwards */
+            case 'N':
+                
+                /* Passes argument for verification, numLinesL3 as uint32, where the argument will be stored, and string indicating error, if needed */
+                if (!parseUnsignedInt(optarg, IS_32BIT ,&numLinesL3, "cache L3 line value.")) {
+                    return EX_DATAERR;
                 }
 
-                printf("Cache L3 lines set\n");
+                DEBUG_PRINT("Cache L3 lines set\n");
                 break;
+
+            /* Parse and validate cache L1 latency, and pass it to simulation paramets afterwards */
             case 'l':
-                latencyCacheL1 = (uint32_t) strtoul(optarg, &endptr, 10);
-
-                if (*endptr != '\0' || latencyCacheL1 <= 0) {
-                    fprintf(stderr, "Invalid L1 latency value: %s\n", optarg);
-                    return 1;
+                
+                /* Passes argument for verification, latencyCacheL1 as uint32, where the argument will be stored, and string indicating error, if needed */
+                if (!parseUnsignedInt(optarg, IS_32BIT, &latencyCacheL1, "cache L1 latency value.")) {
+                    return EX_DATAERR;
                 }
 
-                printf("Cache L1 latency set\n");
+                DEBUG_PRINT("Cache L1 latency set\n");
                 break;
-            case 'a':
-                latencyCacheL2 = (uint32_t) strtoul(optarg, &endptr, 10);
 
-                if (*endptr != '\0' || latencyCacheL2 <= 0) {
-                    fprintf(stderr, "Invalid L2 latency value: %s\n", optarg);
-                    return 1;
-                }                 
-                printf("Cache L2 latency set\n");
-                break;
-            case 't':
-                latencyCacheL3 = (uint32_t) strtoul(optarg, &endptr, 10);
-
-                if (*endptr != '\0' || latencyCacheL3 <= 0) {
-                    fprintf(stderr, "Invalid L3 latency value: %s\n", optarg);
-                    return 1;
-                }   
-
-                printf("Cache L3 latency set\n");
-                break;
-            case 'L':
-                numCacheLevels = (uint8_t) strtoul(optarg, &endptr, 10);
-
-                if (*endptr != '\0' || numCacheLevels <= 0) {
-                    fprintf(stderr, "Invalid number of cache levels %s\n", optarg);
-                    return 1;
+            /* Parse and validate cache L2 latency, and pass it to simulation paramets afterwards */
+            case 'm':
+                
+                /* Passes argument for verification, latencyCacheL2 as uint32, where the argument will be stored, and string indicating error, if needed */
+                if (!parseUnsignedInt(optarg, IS_32BIT,  &latencyCacheL2, "cache L2 latency value.")) {
+                    return EX_DATAERR;
                 }
 
-                printf("Cache levels set\n");
+                DEBUG_PRINT("Cache L2 latency set\n");
                 break;
+
+            /* Parse and validate cache L3 latency, and pass it to simulation paramets afterwards */
+            case 'n':
+
+                /* Passes argument for verification, latencyCache3 as uint32, where the argument will be stored, and string indicating error, if needed */
+                if (!parseUnsignedInt(optarg, IS_32BIT, &latencyCacheL3, "cache L3 latency value.")) {
+                    return EX_DATAERR;
+                }
+
+                DEBUG_PRINT("Cache L3 latency set\n");
+                break;
+            
+            /* Parse and validate number of cache levels, and pass it to simulation paramets afterwards */
+            case 'e':
+
+                /* Passes argument for verification, numCacheLevels as uint8, where the argument will be stored, and string indicating error, if needed */
+                if (!parseUnsignedInt(optarg, &numCacheLevels, IS_8BIT , "number of cache levels.")) {
+                    return EX_DATAERR;
+                }
+
+                DEBUG_PRINT("Cache levels set\n");
+                break;
+            
+            /* Parse and validate mapping strategy, and pass it to simulation paramets afterwards */
             case 'S':
-                unsigned long tmp = strtoul(optarg, &endptr, 10);  
-
-                if (*endptr != '\0' || tmp > 2 || tmp <= 0) {
-                    fprintf(stderr, "Invalid value for mapping strategy %s\n", optarg);
-                    return 1;
+                
+                /* Passes argument for verification, mappingStrategy as uint8, where the argument will be stored, and string indicating error, if needed */
+                if (!parseUnsignedInt(optarg, &mappingStrategy, IS_8BIT ,"mapping strategy.")) {
+                    return EX_DATAERR;
                 }
-                mappingStrategy = (uint8_t) tmp;
 
-                printf("Mapping strategy set\n");
+                DEBUG_PRINT("Mapping strategy set\n");
                 break;
+
+            /* Set debuggers mode */
+            case 'd':
+
+                /* Set debug flag as true for debugging purposes */
+                debug = true;
+
+                DEBUG_PRINT("Debug set\n");
+                break;
+
+            /* Unrecognized option */
             case '?':
-                //TODO
-                return -1;
+                if (optopt) {
+                    fprintf(stderr, "Unknown option '-%c'. Please use --help or -h to see valid options.\n", optopt);
+                } 
+                else {
+                    fprintf(stderr, "Invalid command argument. Please use --help or -h to see valid options.\n");
+                }
+                return EX_USAGE;
         }
     }
 
+    /* No input file specified */
     if (optind >= argc) {
-        //TODO
-        //no input file
-        printf("No input file\n");
-        return -1;
+        fprintf(stderr, "No input file specified. Please run with --help.\n");
+        return EX_USAGE;
     } 
     
+    /* Get filename from last argument */
     const char *filename = argv[optind];
 
-    struct stat sb;
-    if (stat(filename, &sb) == -1){
-        printf("Access denied\n");
-        return EACCES;
-    }
-
-    if (!S_ISREG(sb.st_mode))
-    {
-        printf("Not a regular file\n");
-        return EISDIR;
-    }
-
-    FILE *csv_file = fopen(filename, "r");
-    if (!csv_file) {
-        printf("Error while opening file\n");
+    /* Try to read into content buffer contents from file, specified by filename*/
+    char* content = read_file_to_buffer(filename);
+    if (!content){
+        /*Failed to write in buffer*/
         return EPERM;
-    }   
-
-    char ch;
-    char * content = NULL;
-    size_t size = 0;
-    while ((ch = fgetc(csv_file)) != EOF){
-        content = (char*) realloc(content,size+2);
-        if (!content){
-            fclose(csv_file);
-            return 1; //?
-        }
-        content[size++] = ch;
     }
-    content[size] = '\0';
 
+    /* Count how many requests in order to allocate memory accordingly */
     uint32_t requests_size = countRequests(content);
 
+    /* Allocate memory for requests */
     struct Request* requests = (struct Request*) calloc(requests_size, sizeof(struct Request));
 
+    /* Try to form requests */
     int err;
     err = formRequests(content, requests);
     if (err != 0) {
-        printf("Failed to parse CSV\n");
+        /* In the case of error, cleanup and return with an error*/
+        free(requests);
+        free(content);
         return EPERM;
     }
 
-    fclose(csv_file);
-
-    for (size_t i = 0; i < requests_size; i++) {
-        printf("Request %zu: type=%s, addr = 0x%08X, data=0x%08X\n", i,
-            requests[i].w ? "W" : "R",
-            requests[i].addr,
-            requests[i].data);
-    }
+    /* If debug mode enabled, print requests to the console output */
+    debug ? (void)print_requests(requests, requests_size) : (void)0;
     
+    /* Run C++ SystemC simulation */
     run_simulation(
                 cycles,
          traceFileName, /*tracefile*/ 
@@ -243,14 +264,16 @@ int main(int argc, char** argv)
               requests
     );
 
+    /* Normal cleanup */
     free(requests);
     free(content);
 
-    printf("Success\n");
 
+    /* Programm ran successfuly*/
     return EXIT_SUCCESS;
 }
 
+/* Linker satisfier */
 int sc_main(int argc, char* argv[])
 {
     return 0;
