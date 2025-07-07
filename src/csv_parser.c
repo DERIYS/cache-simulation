@@ -1,45 +1,63 @@
 #include "../include/csv_parser.h"
 
-//This function was inspired by MiniAssembler homework submission 
+/*
+   * @brief               Splits the content by line and returns pointer to new line in content
+   *
+   * @param content       Pointer to content to read from
+   * @param type          Buffer for type of a request (either R or W)
+   * @param address       Buffer for address of a request
+   * @param data          Buffer for data of a request 
+   * 
+   * @return              Pointer to the next line in content or NULL, if there is no more lines
+   * 
+   * @copyright           This function was inspired by MiniAssembler homework submission 
+*/
 char* split_next_line(const char* content, char* type, char* address, char* data) {
+    /* Find the end of the current line */
     const char* newline = strchr(content, '\n');
     size_t line_len = newline ? (size_t)(newline - content) : strlen(content);
 
+    /* Create a temporary copy of the line for tokenization */
     char* line_copy = strndup(content, line_len);
     if (!line_copy) return NULL;
 
+    /* Count commas to ensure correct CSV format */
     int comma_count = 0;
     for (size_t i = 0; i < line_len; i++){
         if (content[i] == ',') comma_count++;
     }
     if (comma_count < 2){
-        printf("Missing fields: less than 3 columns\n");
+        fprintf(stderr, "Missing fields: less than 3 columns\n");
         free(line_copy);
         return PARSE_ERROR;
     }
 
+    /* Tokenization using space and comma delimetrs */
     const char* delimiters = " ,";
 
+    /* Extract type */
     char* token = strtok(line_copy, delimiters);
     if (token) {
         strcpy(type, token);
     } 
     else {
-        printf("Failed to parse type\n");
+        fprintf(stderr, "Failed to parse type\n");
         free(line_copy);
         return PARSE_ERROR;
     }
 
+    /* Extract address */
     token = strtok(NULL, delimiters);
     if (token) {
         strcpy(address, token);
     }
     else { 
-        printf("Failed to parse address\n");
+        fprintf(stderr, "Failed to parse address\n");
         free(line_copy);
         return PARSE_ERROR;
     }
 
+    /* Extract data (may be optional) */
     token = strtok(NULL, delimiters);
     if (token) {
         strcpy(data, token);
@@ -48,27 +66,38 @@ char* split_next_line(const char* content, char* type, char* address, char* data
         *data = '\0';
     }
 
+    /* Check for anything extra after this */
     token = strtok(NULL, delimiters);
     if (token)
     {
-        printf("Unexpected extra data\n");
+        fprintf(stderr, "Unexpected extra data\n");
         free(line_copy);
         return PARSE_ERROR;
     }
 
     free(line_copy);    
-
+    
+    /* Return pointer to next line, or NULL if this was the last one */
     if (!newline) return NULL;
-
     return (char*)(newline + 1);
 }
 
+/*
+   * @brief               Counts the number of memory request lines in the input content. A memory request is defined as a line, a sequence ending with '\n'
+   *
+   * @param content       Pointer to content to read from
+   * 
+   * @return              The number of lines found in the content
+   * 
+*/
 unsigned long countRequests(char* content)
 {
+    /* Use strdup so not to modify the original content */
     size_t requestsCount = 0L;
     char* requests = strdup(content);
     char* ptr = requests;
 
+    /* Count lines */
     while (*ptr){
         if (*ptr == '\n'){
             requestsCount++;
@@ -76,6 +105,7 @@ unsigned long countRequests(char* content)
         ptr++;
     }
 
+    /* If the last character wasn't a newline, count the final line */
     if (ptr != content && *(ptr-1) != '\n')
     {
         requestsCount++;
@@ -85,6 +115,14 @@ unsigned long countRequests(char* content)
     return requestsCount;
 }
 
+/*
+   * @brief               Validates the string value and returns integer
+   *
+   * @param someValue     String of a value to validate
+   * 
+   * @return              Validated integer value or parse error
+   * 
+*/
 uint32_t validateValue(char* someValue)
 {
     char* isEnd;
@@ -97,24 +135,36 @@ uint32_t validateValue(char* someValue)
     }
     if (*isEnd != '\0')
     {
-        printf("Failed to parse value\n");
+        fprintf(stderr, "Failed to parse value\n");
         return VALUE_ERROR;
     }
 
     if (value < 0) {
-        printf("Negative data is not allowed");
+        fprintf(stderr, "Negative data is not allowed");
         return VALUE_ERROR;
     }
 
     return (uint32_t)value;
 }
 
+/*
+   * @brief               Parses a single memory request from raw string inputs and constructs a Request struct
+   *
+   * @param type          String indicating the request type
+   * @param address       String containing the address in hexadecimal or decimal format
+   * @param data          String representing the data (should be non-empty only for write requests)
+   * @param ok            Pointer to a boolean that will be set to true if the request was valid, false otherwise
+   * 
+   * @return              A filled Request struct if valid, otherwise a zeroed struct
+   * 
+*/
 struct Request formSingleRequest(char* type, char* address, char* data, bool* ok)
 {
-    struct Request req = {0};
-    *ok = false;
+    struct Request req = {0};   /* Initialize requests */
+    *ok = false;                /*    Assume failure   */
     bool isR = false;
 
+    /* Determine request type */
     if (strncmp(type,"W",1) == 0){
         req.w = 1;
     }
@@ -127,6 +177,7 @@ struct Request formSingleRequest(char* type, char* address, char* data, bool* ok
         return req;
     }
 
+    /* Validate and assing address*/
     uint32_t req_address = validateValue(address);
     if (req_address == VALUE_ERROR){
         printf("Invalid address\n");
@@ -135,18 +186,22 @@ struct Request formSingleRequest(char* type, char* address, char* data, bool* ok
         req.addr = req_address;
     }
 
+    /* Handle data based on request type */
     uint32_t req_data;
     if (isR && *data != '\0'){
         printf("Invalid data --- no data expected by read\n");
         return req;
     } else if (isR) {
-        //nothing?  
+        /* Data is empty by R, which is correct */
     } else {
+
+        /* Data empty for W request */
         if (*data == '\0'){
             printf("Missing data for write request\n");
             return req;
         }
 
+        /* Validate value and assgin to Request data*/
         req_data = validateValue(data);
 
         if (req_data == VALUE_ERROR){
@@ -157,6 +212,8 @@ struct Request formSingleRequest(char* type, char* address, char* data, bool* ok
             req.data = req_data;
         }
     }
+
+    /* If function didn't return earlier, and response is ok */
     *ok = true;
     return req;
 }

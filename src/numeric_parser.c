@@ -5,7 +5,7 @@
    *
    * @param arg     The string from CLI that needs to be parsed
    * @param out8    Pointer to 8-bit unsigned integer, where validated arg should be saved. If pointer is NULL, then argument should be saved as 32-bit unsigned integer.
-   * @param out32   Pointer to 32-bit unsigned integer, where validated arg should be saved, If pointer is NULL, then argument should be saved as 32-bit unsigned integer.
+   * @param out32   Pointer to 32-bit unsigned integer, where validated arg should be saved, If pointer is NULL, then argument should be saved as 8-bit unsigned integer.
    * @param name    The string containing supposed argument name. If it fails to be validated, the corresponding name will be given to the console
    * 
    * @return        - true if parsing succeeded
@@ -31,9 +31,20 @@ bool parseUnsignedInt(const char* arg, uint8_t* out8, uint32_t* out32, const cha
     unsigned long value = strtoul(arg, &endPtr, 10);
 
     /* Verify for basic cases*/
-    if (arg[0] == '-' || *endPtr != '\0' || errno == ERANGE){
-        /* Validation failed, return false, indicating error */
-        fprintf(stderr, "Invalid %s: %s\n", name, arg);
+    if (arg[0] == '-') {
+        /* We accept only positive values */
+        fprintf(stderr, "Negative values are not accepted %s: %s\n", name, arg);
+        return false;
+    } 
+        
+    if (*endPtr != '\0') {
+        /* Error during parsing */
+        fprintf(stderr, "Literals are not accepted in an argument %s: %s\n", name, arg);
+        return false;
+    } 
+    if (errno == ERANGE){
+        /* The value is either too small or too big */
+        fprintf(stderr, "Buffer error %s: %s\n", name, arg);
         return false;
     }
     
@@ -51,24 +62,7 @@ bool parseUnsignedInt(const char* arg, uint8_t* out8, uint32_t* out32, const cha
     } 
     /* If out8 pointer is not NULL, then try to validate it */
     else {
-        if (name == "mapping strategy.") {
-            /* Verify specific constraints for mapping strategy */
-            if (value < 0 || value > 1) {
-                /* Mapping is not in bounds */
-                fprintf(stderr, "Invalid %s: %s\n", name, arg);
-                return false;
-            }
-        }
-        else {
-            /* Number of cache levels. Verify its constraints */
-            if (value < 0 || value > 3) {
-                /* Number of cache leves is not in bounds */
-                fprintf(stderr, "Invalid %s: %s\n", name, arg);
-                return false;
-            }
-        }
-
-        /* Validation succeeded, store the value at given pointer */
+        /* Store the value at given pointer */
         *out8 = (uint8_t) value;
     }
 

@@ -1,5 +1,10 @@
 #include "../include/helper_functions.h"
 
+/* 
+   * @brief         Prints all of the possible options to run the program 
+   *
+   * @return        void
+*/
 void print_help() 
 {
     printf(
@@ -37,6 +42,14 @@ void print_help()
     );
 }
 
+/*
+   * @brief               Debug function to print all of the requests to console output
+   *
+   * @param requests      Pointer to requests array
+   * @param size          Size of requests array 
+   * 
+   * @return        void
+*/
 void print_requests(struct Request* requests, size_t size){
     for (size_t i = 0; i < size; i++) {
         DEBUG_PRINT("Request %zu: type=%s, addr = 0x%08X, data=0x%08X\n", i,
@@ -46,30 +59,45 @@ void print_requests(struct Request* requests, size_t size){
     }
 }
 
+/*
+   * @brief              
+   *
+   * @param filename    The path to the file to read.  
+   * 
+   * @return            A pointer to a null-terminated buffer containing the file contents,
+   *                    or NULL if an error occurs (file not accessible, not a regular file,
+   *                    I/O error, or memory allocation failure).
+*/
 char* read_file_to_buffer(const char *filename)
 {
     struct stat sb;
+
+    /* Check if file exists */
     if (stat(filename, &sb) == -1){
         fprintf(stderr,"Access denied\n");
         return NULL;
     }
-
+    
+    /* Check if is a regular file */
     if (!S_ISREG(sb.st_mode))
     {
         fprintf(stderr,"Not a regular file\n");
         return NULL;
     }
 
+    /* Try to open a file for reading */
     FILE *csv_file = fopen(filename, "r");
     if (!csv_file) {
         fprintf(stderr, "Error while opening file\n");
         return NULL;
     }   
-
+    
+    /* Read the file charachter by charachter into a buffer */
     char ch;
     char * content = NULL;
     size_t size = 0;
     while ((ch = fgetc(csv_file)) != EOF){
+        /* Resize buffer to hold one more charachter + '\0' */
         char *tmp =  realloc(content,size+2);
         if (!tmp){
             free(content);
@@ -81,6 +109,7 @@ char* read_file_to_buffer(const char *filename)
         content[size++] = ch;
     }
 
+    /* If some I/O error occured during reading */
     if (ferror(csv_file)){
         free(content);
         fclose(csv_file);
@@ -90,9 +119,11 @@ char* read_file_to_buffer(const char *filename)
 
     fclose(csv_file);
 
+    /* Null-terminate the content buffer */
     if (content) {
         content[size] = '\0';
     } else {
+        /* File is empty */
         fprintf(stderr, "File is empty\n");
         return NULL;
     }
