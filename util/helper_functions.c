@@ -50,7 +50,7 @@ void print_help()
    * 
    * @return        void
 */
-void print_requests(struct Request* requests, size_t size){
+void print_requests(Request* requests, size_t size){
     for (size_t i = 0; i < size; i++) {
         DEBUG_PRINT("Request %zu: type=%s, addr = 0x%08X, data=0x%08X\n", i,
             requests[i].w ? "W" : "R",

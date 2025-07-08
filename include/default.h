@@ -1,19 +1,5 @@
-#ifndef STRUCTS_H
-#define STRUCTS_H
-
-#include <stdint.h>
-
-struct Request { 
-    uint32_t    addr;
-    uint32_t    data;
-    uint8_t        w;
-};
-
-struct Result {
-    uint32_t    cycles;
-    uint32_t    misses;
-    uint32_t      hits;
-};
+#ifndef DEFAULT_H
+#define DEFAULT_H
 
 //CHANGE AS NEEDED
 enum DefaultSimulationValues {
@@ -29,4 +15,4 @@ enum DefaultSimulationValues {
     MAPPING_STRATEGY = 0   ,
 };
 
-#endif
+#endif // DEFAULT_H

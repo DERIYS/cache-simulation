@@ -5,7 +5,8 @@
 #include <sysexits.h>
 #include <sys/stat.h>
 
-#include "../include/structs.h"
+#include "../include/request.h"
+#include "../include/default.h"
 #include "../include/simulation.hpp"
 #include "../include/csv_parser.h"
 #include "../include/numeric_parser.h"
@@ -242,7 +243,7 @@ int main(int argc, char** argv)
     uint32_t requests_size = countRequests(content);
 
     /* Allocate memory for requests */
-    struct Request* requests = (struct Request*) calloc(requests_size, sizeof(struct Request));
+    Request* requests = (Request*) calloc(requests_size, sizeof(Request));
 
     /* Try to form requests */
     int err;

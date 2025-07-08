@@ -160,9 +160,9 @@ uint32_t validateValue(char* someValue)
    * @return              A filled Request struct if valid, otherwise a zeroed struct
    * 
 */
-struct Request formSingleRequest(char* type, char* address, char* data, bool* ok)
+Request formSingleRequest(char* type, char* address, char* data, bool* ok)
 {
-    struct Request req = {0};   /* Initialize requests */
+    Request req = {0};   /* Initialize requests */
     *ok = false;                /*    Assume failure   */
     bool isR = false;
 
@@ -229,7 +229,7 @@ struct Request formSingleRequest(char* type, char* address, char* data, bool* ok
    * @return              Returns either 0 indicating normal procedure or -1 indicating failure
    * 
 */
-int formRequests(char* content, struct Request* requests)
+int formRequests(char* content, Request* requests)
 {
 
     /* Allocate memory for type, address and data of a single request */
@@ -254,7 +254,7 @@ int formRequests(char* content, struct Request* requests)
         /* Set a response for single request */
         bool ok = false;
         /* Try to form a single request */
-        struct Request request = formSingleRequest(type,address,data,&ok);
+        Request request = formSingleRequest(type,address,data,&ok);
         /* If response is not okay, free resources and return an error */
         if (!ok) {
             fprintf(stderr,"Failed to form a request\n");

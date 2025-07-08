@@ -21,7 +21,7 @@
    * @return         
    *         
 */
-struct Result run_simulation (
+Result run_simulation (
     uint32_t             cycles,
     const char*       tracefile, /*if tracefile is NULL, don't create it*/
     uint8_t      numCacheLevels,
@@ -34,7 +34,7 @@ struct Result run_simulation (
     uint32_t     latencyCacheL3,
     uint8_t     mappingStrategy,
     uint32_t        numRequests,
-    struct Request*    requests
+    Request*    requests
 ) 
 {
     /*TODO*/

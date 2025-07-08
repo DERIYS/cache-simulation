@@ -1,13 +1,14 @@
 #ifndef SIMULATION_HPP
 #define SIMULATION_HPP
 
-#include "structs.h"
+#include "request.h"
+#include "result.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-struct Result run_simulation (
+Result run_simulation (
     uint32_t             cycles,
     const char*       tracefile,
     uint8_t      numCacheLevels,
@@ -20,7 +21,7 @@ struct Result run_simulation (
     uint32_t     latencyCacheL3,
     uint8_t     mappingStrategy,
     uint32_t        numRequests,
-    struct Request*    requests
+    Request*    requests
 );
 
 #ifdef __cplusplus

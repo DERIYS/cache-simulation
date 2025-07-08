@@ -6,16 +6,16 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
-#include "structs.h"
+#include "request.h"
 
 
 #define PARSE_ERROR ((char*)-1)
 #define VALUE_ERROR (uint32_t)(-1)
 
 char* split_next_line(const char* content, char* type, char* address, char* data);
-struct Request formSingleRequest(char* type, char* address, char* data, bool* ok);
+Request formSingleRequest(char* type, char* address, char* data, bool* ok);
 unsigned long countRequests(char* content);
-int formRequests(char* content, struct Request* requests);
+int formRequests(char* content, Request* requests);
 uint32_t validateValue(char* value);
 
 #endif // CSV_PARSER_H
