@@ -60,7 +60,7 @@ bool parseUnsignedInt(const char* arg, uint8_t* out8, uint32_t* out32, const cha
         *out32 = (uint32_t) value;
 
     } 
-    /* If out8 pointer is not NULL, then try to validate it */
+    /* If out8 pointer is not NULL, then save it */
     else {
         /* Store the value at given pointer */
         *out8 = (uint8_t) value;

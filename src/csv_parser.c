@@ -125,6 +125,7 @@ unsigned long countRequests(char* content)
 */
 uint32_t validateValue(char* someValue)
 {
+    /* Accept both hexadecimal and decimal format */
     char* isEnd;
     long value;
     if (strncmp(someValue, "0x", 2) == 0){
@@ -133,12 +134,13 @@ uint32_t validateValue(char* someValue)
     else {
         value = strtol(someValue,&isEnd,10);
     }
+    /* Not a value check */
     if (*isEnd != '\0')
     {
         fprintf(stderr, "Failed to parse value\n");
         return VALUE_ERROR;
     }
-
+    /* Don't accept negative values */
     if (value < 0) {
         fprintf(stderr, "Negative data is not allowed");
         return VALUE_ERROR;
@@ -218,17 +220,30 @@ struct Request formSingleRequest(char* type, char* address, char* data, bool* ok
     return req;
 }
 
+/*
+   * @brief               Receives content and forms requests out of it. If any of them is invalid, returns -1 indicating error
+   *
+   * @param content       String content to form requests from
+   * @param address       String containing the address in hexadecimal or decimal format
+   * 
+   * @return              Returns either 0 indicating normal procedure or -1 indicating failure
+   * 
+*/
 int formRequests(char* content, struct Request* requests)
 {
 
+    /* Allocate memory for type, address and data of a single request */
     char* type    = (char*) calloc(2, sizeof(char));
     char* address = (char*) calloc(21,sizeof(char));
     char* data    = (char*) calloc(21,sizeof(char));
 
+    /* Loop through content */
     size_t request_counter = 0;
     while(content){
+        /* Try to store type, address and data from a single line and return pointer to the next line */
         content = split_next_line(content, type, address, data);
 
+        /* If a parse error happes, free resources and return an error */
         if (content == PARSE_ERROR){
             free(type);
             free(address);
@@ -236,21 +251,28 @@ int formRequests(char* content, struct Request* requests)
             return -1;
         }
 
+        /* Set a response for single request */
         bool ok = false;
+        /* Try to form a single request */
         struct Request request = formSingleRequest(type,address,data,&ok);
+        /* If response is not okay, free resources and return an error */
         if (!ok) {
-            printf("Failed to form a request\n");
+            fprintf(stderr,"Failed to form a request\n");
             free(type);
             free(address);
             free(data);
             return -1;
         }
+
+        /* Store single request and increment the pointer */
         requests[request_counter++] = request;
     }
 
+    /* Normal cleanup */
     free(type);
     free(address);
     free(data);
 
+    /* Success */
     return 0;
 }
