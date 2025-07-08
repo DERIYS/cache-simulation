@@ -8,9 +8,26 @@ CPP_SRCS = src/simulation.cpp
 
 CFLAGS := -I$(SCPATH)/include -L$(SCPATH)/lib
 
+# Binary folder
+BIN_DIR := bin
+
 # Object files
-C_OBJS = $(C_SRCS:.c=.o)
-CPP_OBJS = $(CPP_SRCS:.cpp=.o)
+C_OBJS = $(patsubst src/%.c, $(BIN_DIR)/%.o, $(filter src/%.c,$(C_SRCS))) \
+         $(patsubst util/%.c, $(BIN_DIR)/%.o, $(filter util/%.c,$(C_SRCS)))
+CPP_OBJS = $(patsubst src/%.cpp, $(BIN_DIR)/%.o, $(CPP_SRCS))
+
+# Ensure bin directory exists before compiling
+$(BIN_DIR)/%.o: src/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BIN_DIR)/%.o: src/%.cpp
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(BIN_DIR)/%.o: util/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c $< -o $@
 
 # assignment task file
 HEADERS := helper_functions.h simulation.hpp csv_parser.h structs.h numeric_parser.h cache.hpp multiplexer.hpp cache_layer.hpp main_memory.hpp
@@ -51,14 +68,6 @@ endif
 # Default to release build for both app and library
 all: debug
 
-# Rule to compile .c files to .o files
-%.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
-
-# Rule to compile .cpp files to .o files
-%.o: %.cpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@
-
 # Debug build
 debug: CFLAGS += -g
 debug: CXXFLAGS += -g
@@ -86,8 +95,17 @@ coverage-report:
 # clean up
 clean:
 	rm -f $(TARGET)
-	rm -rf $(C_OBJS) $(CPP_OBJS)
+	rm -rf $(BIN_DIR)
 	rm -f src/*.gcda src/*.gcno coverage.info
 	rm -rf coverage-report
+
+run: $(TARGET)
+	./cache --cycles 1000 test/inputs/valid_data.csv
+
+run-debug: $(TARGET)
+	./cache -d --cycles 1000 test/inputs/valid_data.csv
+
+run-tests: $(TARGET)
+	python3 test/cache_tests.py
 
 .PHONY: all debug release clean

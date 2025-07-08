@@ -19,7 +19,10 @@ class CacheProgramTests(unittest.TestCase):
             "test/inputs/invalid_data9.csv",
             "test/inputs/invalid_data10.csv",
             "test/inputs/invalid_data11.csv",
-            "test/inputs/invalid_data12.csv"
+            "test/inputs/invalid_data12.csv",
+            "test/inputs/invalid_data13.csv",
+            "test/inputs/invalid_data14.csv",
+            "test/inputs/invalid_data15.csv"
         ]
         self.nonexistent_file = "test/inputs/does_not_exist.csv"
 
@@ -34,7 +37,6 @@ class CacheProgramTests(unittest.TestCase):
     def test_valid_csv_file(self):
         result = self.run_cache([self.valid_file])
         self.assertEqual(result.returncode, 0)
-        #self.assertIn("Request", result.stdout)
 
     def test_invalid_csv_files(self):
         for invalid_file in self.invalid_files:
@@ -70,8 +72,37 @@ class CacheProgramTests(unittest.TestCase):
         ])
         self.assertEqual(result.returncode, 0)
 
+    def test_negative_cycles(self):
+        result = self.run_cache([
+            "-d",
+            "-c", "-1000",
+            self.valid_file
+        ])
+        self.assertIn("Negative", result.stderr)
+        self.assertNotEqual(result.returncode,0)
+
+    def test_literals_cycles(self):
+        result = self.run_cache([
+            "-c", "1000a",
+            self.valid_file
+        ])
+        self.assertIn("Literals", result.stderr)
+        self.assertNotEqual(result.returncode,0)
+
+    def test_overflow_cycles(self):
+        result = self.run_cache([
+            "-c", "100000000000000000000000000000000000000000000000",
+            self.valid_file
+        ])        
+        self.assertIn("Buffer error", result.stderr)
+        self.assertNotEqual(result.returncode,0)
+
+
     def test_no_input_file(self):
-        result = self.run_cache([])
+        result = self.run_cache([
+            "-c", "100",
+        ])
+        self.assertIn("No input", result.stderr)
         self.assertNotEqual(result.returncode, 0)
 
 if __name__ == '__main__':

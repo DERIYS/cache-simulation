@@ -98,7 +98,7 @@ char* read_file_to_buffer(const char *filename)
     size_t size = 0;
     while ((ch = fgetc(csv_file)) != EOF){
         /* Resize buffer to hold one more charachter + '\0' */
-        char *tmp =  realloc(content,size+2);
+        char *tmp = (char*) realloc(content,size+2);
         if (!tmp){
             free(content);
             fclose(csv_file);
