@@ -22,7 +22,7 @@ SC_MODULE(CACHE) {
   sc_in<bool> r, w;
 
   sc_in<bool> mem_ready;
-  sc_in<uint32_t> mem_rdata;
+  std::vector<sc_in<uint8_t>> mem_cacheline;
 
   //outputs
   sc_out<uint32_t> rdata;
@@ -34,55 +34,58 @@ SC_MODULE(CACHE) {
   //modules
   std::vector<std::unique_ptr<CACHE_LAYER>> L;
   MAIN_MEMORY main_memory;
-  MULTIPLEXER_BOOLEAN cacheHit,cacheReady, rMul,wMul;
-  MULTIPLEXER_I32 cacheData,addrMul,wdataMul;
+  MULTIPLEXER_BOOLEAN cache_miss,cache_ready, r_mux,w_mux;
+  MULTIPLEXER_I32 cache_data,addr_mux,wdata_mux;
   
   //parameters
-  uint8_t numCahceLevels;
-  uint32_t cachelineSize, numLinesL1, numLinesL2, numLinesL3;
-  uint32_t latencyCacheL1,  latencyCacheL2,  latencyCacheL3;
-  uint8_t mappingStrategy;
+  uint8_t num_cahce_levels;
+  uint32_t cacheline_size, num_lines_L1, num_lines_L2, num_lines_L3;
+  uint32_t latency_cache_L1,  latency_cache_L2,  latency_cache_L3;
+  uint8_t mapping_strategy;
 
   //signals
-  sc_signal<uint32_t> addrMulIn,addrMulOut[3],wdataMulIn,wdataMulOut[3];
-  sc_signal<bool> rMulIn,rMulOut[3],wMulIn,wMulOut[3];
+  sc_signal<uint32_t> addr_mux_in,addr_mux_out[3],wdata_mux_in,wdata_mux_out[3];
+  sc_signal<bool> r_mux_in,r_mux_out[3],w_mux_in,w_mux_out[3];
 
-  sc_signal<uint32_t> addrMem,wdataMem,rdataMem;
-  sc_signal<bool> rMem,wMem,readyMem;
+  sc_signal<uint32_t> mem_addr_sig,mem_wdata_sig;
+  std::vector<sc_signal<uint8_t>> mem_cacheline_sig;
+  sc_signal<bool> mem_r_sig,mem_w_sig,mem_ready_sig;
   //multiplexer signals
-  sc_signal<uint8_t> selectData,selectHit,selectReady,selectMux;
-  sc_signal<uint32_t> cacheDataIn[3],cacheDataOut;
-  sc_signal<bool> cacheHitIn[3],cacheHitOut,cacheReadyIn[3],cacheReadyOut;
+  sc_signal<uint8_t> data_mux_select,miss_mux_select,ready_mux_select,select_zero;
+  sc_signal<uint32_t> cache_data_in[3],cache_data_out;
+  sc_signal<bool> cache_miss_in[3],cache_miss_out,cache_ready_in[3],cache_ready_out;
 
 
   SC_CTOR(CACHE);
 
-  CACHE(sc_module_name name, uint8_t numCahceLevels, uint32_t cachelineSize,uint32_t numLinesL1,uint32_t numLinesL2,
-    uint32_t numLinesL3, uint32_t latencyCacheL1, uint32_t latencyCacheL2, uint32_t latencyCacheL3, uint8_t mappingStrategy)
+  CACHE(sc_module_name name, uint8_t num_cache_levels, uint32_t cacheline_size,uint32_t num_lines_L1,uint32_t num_lines_L2,
+    uint32_t num_lines_L3, uint32_t latency_cache_L1, uint32_t latency_cache_L2, uint32_t latency_cache_L3, uint8_t mapping_strategy)
     :sc_module(name),
-    L(numCahceLevels),
-    numCahceLevels(numCahceLevels),
-    cachelineSize(cachelineSize),
-    numLinesL1(numLinesL1),numLinesL2(numLinesL2),numLinesL3(numLinesL3),
-    latencyCacheL1(latencyCacheL1),latencyCacheL2(latencyCacheL2),latencyCacheL3(latencyCacheL3),
-    mappingStrategy(mappingStrategy),
-    cacheData("cacheData",numCahceLevels,1),
-    cacheHit("cacheHit",numCahceLevels,1),
-    cacheReady("cacheReady",numCahceLevels,1),
-    rMul("rMil",1,numCahceLevels),
-    wMul("wMul",1,numCahceLevels),
-    addrMul("addrMul",1,numCahceLevels),
-    wdataMul("wdataMul",1,numCahceLevels),
-    main_memory("main_memory")
+    L(num_cache_levels),
+    num_cahce_levels(num_cache_levels),
+    cacheline_size(cacheline_size),
+    num_lines_L1(num_lines_L1),num_lines_L2(num_lines_L2),num_lines_L3(num_lines_L3),
+    latency_cache_L1(latency_cache_L1),latency_cache_L2(latency_cache_L2),latency_cache_L3(latency_cache_L3),
+    mapping_strategy(mapping_strategy),
+    cache_data("cacheData",num_cache_levels,1),
+    cache_miss("cacheMiss",num_cache_levels,1),
+    cache_ready("cacheReady",num_cache_levels,1),
+    r_mux("rMil",1,num_cache_levels),
+    w_mux("wMul",1,num_cache_levels),
+    addr_mux("addrMul",1,num_cache_levels),
+    wdata_mux("wdataMul",1,num_cache_levels),
+    main_memory("main_memory",cacheline_size),
+    mem_cacheline_sig(cacheline_size),
+    mem_cacheline(cacheline_size)
     { 
-      switch (numCahceLevels)
+      switch (num_cache_levels)
       {
         case 3:
-          L[2]=(std::make_unique<CACHE_LAYER>("L3",latencyCacheL3,numLinesL3,cachelineSize,mappingStrategy));
+          L[2]=(std::make_unique<CACHE_LAYER>("L3",latency_cache_L3,num_lines_L3,cacheline_size,mapping_strategy));
         case 2:
-          L[1]=(std::make_unique<CACHE_LAYER>("L2",latencyCacheL2,numLinesL2,cachelineSize,mappingStrategy));
+          L[1]=(std::make_unique<CACHE_LAYER>("L2",latency_cache_L2,num_lines_L2,cacheline_size,mapping_strategy));
         case 1:
-          L[0]=(std::make_unique<CACHE_LAYER>("L1",latencyCacheL1,numLinesL1,cachelineSize,mappingStrategy));
+          L[0]=(std::make_unique<CACHE_LAYER>("L1",latency_cache_L1,num_lines_L1,cacheline_size,mapping_strategy));
           break;
         default:
           throw std::runtime_error("Number of Cache Levels must be in range [1;3].\n");
@@ -90,40 +93,42 @@ SC_MODULE(CACHE) {
       }
       //set up mux for input data. 1 input, numCacheLevels output. each output for each cache level. select-bit everywhere = 0
       //input data will be writen to mux in behavior()
-      selectMux.write(0);
-      addrMul.select(selectMux);wdataMul.select(selectMux);rMul.select(selectMux);wMul.select(selectMux);
-      addrMul.in[0](addrMulIn);
-      wdataMul.in[0](wdataMulIn);
-      rMul.in[0](rMulIn);
-      wMul.in[0](wMulIn);
+      select_zero.write(0);
+      addr_mux.in[0](addr_mux_in); addr_mux.select(select_zero);
+      wdata_mux.in[0](wdata_mux_in); wdata_mux.select(select_zero);
+      r_mux.in[0](r_mux_in); r_mux.select(select_zero);
+      w_mux.in[0](w_mux_in); w_mux.select(select_zero);
 
       //connect ports of each cache level
-      for(int i=0;i<numCahceLevels;i++){
+      for(int i=0;i<num_cache_levels;i++){
         L[i]->clk(clk);
         //use outputs from mux as input data
-        L[i]->addr(addrMulOut[i]); addrMul.out[i](addrMulOut[i]);
-        L[i]->wdata(wdataMulOut[i]); wdataMul.out[i](wdataMulOut[i]);
-        L[i]->r(rMulOut[i]); rMul.out[i](rMulOut[i]);
-        L[i]->w(wMulOut[i]); wMul.out[i](wMulOut[i]);
+        L[i]->addr(addr_mux_out[i]); addr_mux.out[i](addr_mux_out[i]);
+        L[i]->wdata(wdata_mux_out[i]); wdata_mux.out[i](wdata_mux_out[i]);
+        L[i]->r(r_mux_out[i]); r_mux.out[i](r_mux_out[i]);
+        L[i]->w(w_mux_out[i]); w_mux.out[i](w_mux_out[i]);
         //conncecnt to input of mux. numCacheLevels inputs, 1 output
-        L[i]->data(cacheDataIn[i]);cacheData.in[i](cacheDataIn[i]);
-        L[i]->hit(cacheHitIn[i]);cacheHit.in[i](cacheHitIn[i]);
-        L[i]->ready(cacheReadyIn[i]);cacheReady.in[i](cacheReadyIn[i]);
+        L[i]->data(cache_data_in[i]);cache_data.in[i](cache_data_in[i]);
+        L[i]->miss(cache_miss_in[i]);cache_miss.in[i](cache_miss_in[i]);
+        L[i]->ready(cache_ready_in[i]);cache_ready.in[i](cache_ready_in[i]);
       }
       
       //connect output from mux, to get data from one of the cache levels
-      cacheData.out[0](cacheDataOut); cacheData.select(selectData);
-      cacheHit.out[0](cacheHitOut);   cacheHit.select(selectHit);
-      cacheReady.out[0](cacheReadyOut); cacheReady.select(selectReady);
+      cache_data.out[0](cache_data_out);cache_data.select(data_mux_select);
+      cache_miss.out[0](cache_miss_out);  cache_miss.select(miss_mux_select);
+      cache_ready.out[0](cache_ready_out); cache_ready.select(ready_mux_select);
 
       //connect inputs/outputs for main_memory module
       main_memory.clk(clk);
-      main_memory.addr(addrMem);mem_addr(addrMem);
-      main_memory.wdata(wdataMem);mem_wdata(wdataMem);
-      main_memory.r(rMem); mem_r(rMem);
-      main_memory.w(wMem); mem_w(wMem);
-      main_memory.rdata(rdataMem); mem_rdata(rdataMem);
-      main_memory.ready(readyMem); mem_ready(readyMem);
+      main_memory.addr(mem_addr_sig);mem_addr(mem_addr_sig);
+      main_memory.wdata(mem_wdata_sig);mem_wdata(mem_wdata_sig);
+      main_memory.r(mem_r_sig); mem_r(mem_r_sig);
+      main_memory.w(mem_w_sig); mem_w(mem_w_sig);
+      for(int i=0;i<cacheline_size;i++){
+        main_memory.cacheline[i](mem_cacheline_sig[i]);
+        mem_cacheline[i](mem_cacheline_sig[i]);
+      }
+      main_memory.ready(mem_ready_sig); mem_ready(mem_ready_sig);
 
     SC_THREAD(behaviour);
     sensitive << clk.pos();
@@ -132,14 +137,11 @@ SC_MODULE(CACHE) {
   void behaviour() {
     while(true) {
         wait();
-        if(!test){
-          miss.write(false);
-          ready.write(false);
-        }
-        wMulIn.write(w.read());
-        rMulIn.write(r.read());
-        wdataMulIn.write(wdata.read());
-        addrMulIn.write(addr.read()); 
+        //set input signals in multiplexer, which forward them to each cache level
+        w_mux_in.write(w.read());
+        r_mux_in.write(r.read());
+        wdata_mux_in.write(wdata.read());
+        addr_mux_in.write(addr.read()); 
         wait(SC_ZERO_TIME);
         if (r.read()) {
             doRead(w.read());
@@ -147,38 +149,47 @@ SC_MODULE(CACHE) {
         if (w.read()) {
             doWrite();
         }
+        
+
     }
   }
 
+  //waiting till each cache level from low to high will be ready
+  //and check if there is a hit/miss. if hit - wait cache latency and return rdata
+  //miss - set input signals for main_memory, wait till ready, write readed cacheline in each cache level and return it
   void doRead(bool dontSetReady) {
-    if(test){
-          miss.write(false);
-          ready.write(false);
-        }
     bool hit=false;
     uint8_t indexL=0;
-    for(int i=0;i<numCahceLevels;i++){
+    for(int i=0;i<num_cahce_levels;i++){
+      //wait till cache level will be ready with reading
         while(!L[i]->ready.read()){
             wait();
         }
-        if( L[i]->hit.read()){
-          selectHit.write(i);
-          selectReady.write(i);
-          selectData.write(i);//choose select bit based on cache-hit from L1 to L3, so rdata will be provided  
+        //if data was find in cache level->defines select bits for multiplexers
+        if( !L[i]->miss.read()){
+          miss_mux_select.write(i);
+          ready_mux_select.write(i);
+          data_mux_select.write(i);
           wait(SC_ZERO_TIME);
           hit=true;
           indexL=i;
+          if(test) std::cout<<"hit cache in read: L[ "<<i<<" ]: "<<hit<<"\n";
           break;
         }
     }
+    //if it was hit at some of cache levels
     if(hit){
-        for(int i = 0; i <L[indexL]->latency; i++) {
-            wait();//wait letency for cache, where data was found
-        }
+      rdata.write(cache_data.out[0].read());
+      for(int i = 0; i <L[indexL]->latency; i++) {
+          wait();//wait letency for cache, where data was found
+      }
     }else{
+        if(test) std::cout<<"miss cache in read \n";
+        mem_addr.write(addr.read());
+        mem_wdata.write(wdata.read());
+        mem_r.write(r.read());mem_w.write(w.read());
         //cache miss, read data from main_memory and write it to all 3 caches 
-        miss.write(true);
-         mem_r.write(true);
+         mem_r.write(true);//start reading in main_memory for one cycle
          wait();
          mem_r.write(false);
         //wait till main_memory finish to read the data
@@ -186,61 +197,60 @@ SC_MODULE(CACHE) {
           wait();
         }
         //memory latecny will be waited in main_memory function
-        std::vector<uint8_t> cacheLine=main_memory.getCacheLine(addr.read(),cachelineSize);
-        for(int i=0;i<numCahceLevels;i++){
-            L[i]->write_cacheline(addr.read(),cacheLine);
+        std::vector<uint8_t> t;
+        for(int i=0;i<cacheline_size;i++){
+          t.push_back(mem_cacheline[i].read());
         }
-        for(int i=0;i<MAIN_MEMORY_LATENCY;i++)
-            wait();
+        for(int i=0;i<num_cahce_levels;i++){
+            L[i]->write_cacheline(addr.read(),t);
+        }
+        rdata.write( L[0]->extract_word(t,addr.read() & (cacheline_size-1)));
     }
     if(!dontSetReady){
-      std::cout<<"ready in read: "<<L[0]->ready.read()<<", "<<L[1]->ready.read()<<", "<<L[2]->ready.read()<<"\n";
-            std::cout<<"hit in read: "<<L[0]->hit.read()<<", "<<L[1]->hit.read()<<", "<<L[2]->hit.read()<<"\n";
-
-         ready.write(true);
+         ready.write(cache_ready.out[0].read());
     }
-
-    rdata.write(cacheDataOut.read());
+     miss.write(cache_miss.out[0].read());
   }
 
   void doWrite() {
-    bool hit[numCahceLevels],hitForMiss;
-    uint8_t indexL[numCahceLevels];
-    for(int i=0;i<numCahceLevels;i++){
+    bool hit[num_cahce_levels];
+    uint8_t indexL[num_cahce_levels];
+    for(int i=0;i<num_cahce_levels;i++){
         while(!L[i]->ready.read())
             wait();
-        if( L[i]->hit.read()){
+        if( !L[i]->miss.read()){
             hit[i]=true;
-            hitForMiss=true;
+            miss_mux_select.write(i);
+            ready_mux_select.write(i);
+            data_mux_select.write(i);
         }else
             hit[i]=false;
     }
-    if(!hitForMiss){
-        miss.write(true);
-    }
+    if(test) std::cout<<"hit caches in write: L[1]: "<<hit[0]<<", L[2]: "<<hit[1]<<", L[3]: "<<hit[2]<<"\n";
+    mem_addr.write(addr.read());
+    mem_wdata.write(wdata.read());
+    mem_r.write(r.read());mem_w.write(w.read());
     //the data must be written in rest caches and in main_memory
-    mem_w.write(true);
-    wait();
-    mem_w.write(false);
     while(!mem_ready.read())
       wait();
-    for(int i=0;i<numCahceLevels;i++)
-        if(!hit[i])
-            L[i]->write_cacheline(addr.read(),main_memory.getCacheLine(addr.read(),cachelineSize)); 
-    for(int i=0;i<MAIN_MEMORY_LATENCY;i++)
-            wait();
-    ready.write(true);
-
-    //  ready.write(cacheReadyOut.read());
-    //  rdata.write(cacheDataOut.read());
-    //  miss.write(cacheHitOut.read());
+    mem_w.write(false);
+    std::vector<uint8_t> t;
+    for(int i=0;i<cacheline_size;i++){
+      t.push_back(mem_cacheline[i].read());
+    }
+    for(int i=0;i<num_cahce_levels;i++)
+        if(!hit[i]){
+            L[i]->write_cacheline(addr.read(),t); 
+        }
+    ready.write(cache_ready.out[0].read());
+    miss.write(cache_miss.out[0].read());
   }
 
   
 
   //returns byte in cache-level: level, cache line: lineIndex, at position: index
   uint8_t getCacheLineContent(uint32_t level, uint32_t lineIndex, uint32_t index){
-    if(level<=0 || level>numCahceLevels)
+    if(level<=0 || level>num_cahce_levels)
         throw std::runtime_error("Number of Cache Levels must be in range [1;3] in method getCacheLineContent.\n");
     return L[level-1]->getCacheLineContent(lineIndex,index);
   }
@@ -252,408 +262,3 @@ SC_MODULE(CACHE) {
 };
 
 #endif // CACHE_HPP
-
-
-// #ifndef CACHE_HPP
-// #define CACHE_HPP
-
-// #include "cache_layer.hpp"
-// #include "multiplexer.hpp"
-// #include "main_memory.hpp"
-// #include <systemc>
-// #include <map>
-// #include <vector>
-// #include <memory>
-
-// #define MAIN_MEMORY_LATENCY 100
-
-// using namespace sc_core;
-
-// SC_MODULE(CACHE) {
-//   //inputs
-//   sc_in<bool> clk;
-
-//   sc_in<uint32_t> addr, wdata;
-//   sc_in<bool> r, w;
-
-//   sc_in<bool> mem_ready;
-//   sc_in<uint32_t> mem_rdata;
-
-//   //outputs
-//   sc_out<uint32_t> rdata;
-//   sc_out<bool> ready,miss;
-
-//   sc_out<uint32_t> mem_addr,mem_wdata;
-//   sc_out<bool> mem_r,mem_w;
-
-//   //modules
-//   std::vector<std::unique_ptr<CACHE_LAYER>> L;
-//   MAIN_MEMORY main_memory;
-//   MULTIPLEXER_BOOLEAN cacheHit,cacheReady,rMul,wMul;
-//   MULTIPLEXER_I32 cacheData,addrMul,wdataMul;
-  
-//   //parameters
-//   uint8_t numCahceLevels;
-//   uint32_t cachelineSize, numLinesL1, numLinesL2, numLinesL3;
-//   uint32_t latencyCacheL1,  latencyCacheL2,  latencyCacheL3;
-//   uint8_t mappingStrategy;
-
-//   //signals
-//   sc_signal<uint32_t> addrMulIn,addrMulOut[3],wdataMulIn,wdataMulOut[3];
-//   sc_signal<bool> rMulIn,rMulOut[3],wMulIn,wMulOut[3];
-
-//   sc_signal<uint32_t> addrL[3],wdataL[3],addrMem,wdataMem,rdataMem;
-//   sc_signal<bool> rL[3],wL[3],rMem,wMem,readyMem;
-//   //multiplexer signals
-//   sc_signal<uint8_t> sL[3];
-//   sc_signal<uint8_t> selectData,selectHit,selectReady;
-//   sc_signal<uint32_t> cacheDataIn[3],cacheDataOut;
-//   sc_signal<bool> cacheHitIn[3],cacheHitOut,cacheReadyIn[3],cacheReadyOut;
-
-
-//   SC_CTOR(CACHE);
-
-//   CACHE(sc_module_name name, uint8_t numCahceLevels, uint32_t cachelineSize,uint32_t numLinesL1,uint32_t numLinesL2,
-//     uint32_t numLinesL3, uint32_t latencyCacheL1, uint32_t latencyCacheL2, uint32_t latencyCacheL3, uint8_t mappingStrategy)
-//     :sc_module(name),
-//     L(numCahceLevels),
-//     numCahceLevels(numCahceLevels),
-//     cachelineSize(cachelineSize),
-//     numLinesL1(numLinesL1),numLinesL2(numLinesL2),numLinesL3(numLinesL3),
-//     latencyCacheL1(latencyCacheL1),latencyCacheL2(latencyCacheL2),latencyCacheL3(latencyCacheL3),
-//     mappingStrategy(mappingStrategy),
-//     cacheData("cacheData",numCahceLevels,1),
-//     cacheHit("cacheHit",numCahceLevels,1),
-//     cacheReady("cacheReady",numCahceLevels,1),
-//     rMul("rMil",1,3),
-//     wMul("wMul",1,3),
-//     addrMul("addrMul",1,3),
-//     wdataMul("wdataMul",1,3),
-//     main_memory("main_memory")
-//     { 
-//       switch (numCahceLevels)
-//       {
-//         case 3:
-//           L[2]=(std::make_unique<CACHE_LAYER>("L3",latencyCacheL3,numLinesL3,cachelineSize,mappingStrategy));
-//         case 2:
-//           L[1]=(std::make_unique<CACHE_LAYER>("L2",latencyCacheL2,numLinesL2,cachelineSize,mappingStrategy));
-//         case 1:
-//           L[0]=(std::make_unique<CACHE_LAYER>("L1",latencyCacheL1,numLinesL1,cachelineSize,mappingStrategy));
-//           break;
-//         default:
-//           throw std::runtime_error("Number of Cache Levels must be in range [1;3].\n");
-//           break;
-//       }
-
-//       addr(addrMulIn); addrMul.in[0](addrMulIn);
-//       wdata(wdataMulIn); wdataMul.in[0](wdataMulIn);
-//       r(rMulIn); rMul.in[0](rMulIn);
-//       w(wMulIn); wMul.in[0](wMulIn);
-
-//       for(int i=0;i<numCahceLevels;i++){
-//         L[i]->clk(clk);
-//         L[i]->addr(addrMulOut[i]); addrMul.out[i](addrMulOut[i]);
-//         L[i]->wdata(wdataMulOut[i]); wdataMul.out[i](wdataMulOut[i]);
-//         L[i]->r(rMulOut[i]); rMul.out[i](rMulOut[i]);
-//         L[i]->w(wMulOut[i]); wMul.out[i](wMulOut[i]);
-
-//         //L[i]->addr(addrL[i]);addr(addrL[i]);
-//         //L[i]->wdata(wdataL[i]);wdata(wdataL[i]);
-//         //L[i]->r(rL[i]);r(rL[i]);
-//         //L[i]->w(wL[i]);w(wL[i]);
-//         L[i]->data(cacheDataIn[i]);cacheData.in[i](cacheDataIn[i]);
-//         L[i]->hit(cacheHitIn[i]);cacheHit.in[i](cacheHitIn[i]);
-//         L[i]->ready(cacheReadyIn[i]);cacheReady.in[i](cacheReadyIn[i]);
-
-//         sL[i].write(i);
-//       }
-//       rdata(cacheDataOut); cacheData.out[0](cacheDataOut); cacheData.select(selectData);
-//       miss(cacheHit.out[0]); 
-
-//       //miss(cacheHitOut);cacheHit.out[0](cacheHitOut); 
-//       cacheHit.select(selectHit);
-//       ready(cacheReadyOut);cacheReady.out[0](cacheReadyOut); cacheReady.select(selectReady);
-        
-//       main_memory.clk(clk);
-//       main_memory.addr(addrMem);mem_addr(addrMem);
-//       main_memory.wdata(wdataMem);mem_wdata(wdataMem);
-//       main_memory.r(rMem); mem_r(rMem);
-//       main_memory.w(wMem); mem_w(wMem);
-//       main_memory.rdata(rdataMem); mem_rdata(rdataMem);
-//       main_memory.ready(readyMem); mem_ready(readyMem);
-
-//     SC_THREAD(behaviour);
-//     sensitive << clk.pos();
-//   }
-
-//   void behaviour() {
-//     while(true) {
-//         wait();
-//       if (r.read()) {
-//         doRead(w.read());
-//       }
-//       if (w.read()) {
-//         doWrite();
-//       }
-//     }
-//   }
-
-//   void doRead(bool dontSetReady) {
-//     bool hit=false;
-//     uint8_t indexL=0;
-//     for(int i=0;i<numCahceLevels;i++){
-//         while(!L[i]->ready.read())
-//             wait();
-//       if( L[i]->hit.read()){
-//         cacheData.select(sL[i]);//choose select bit based on cache-hit from L1 to L3, so rdata will be provided  
-//         wait(SC_ZERO_TIME);
-//         hit=true;
-//         indexL=i;
-//         break;
-//       }
-//     }
-//     if(hit){
-//         for(int i = 0; i <L[indexL]->latency; i++) {
-//             wait();//wait letency for cache, where data was found
-//         }
-//     }else{
-//         //cache miss, read data from main_memory and write it to all 3 caches 
-//         miss.write(true);
-//         //wait till main_memory finish to read the data
-//         do{
-//             wait();
-//         }while(!mem_ready);
-//         //memory latecny will be waited in main_memory function
-//         std::vector<uint8_t> cacheLine=main_memory.getCacheLine(addr,cachelineSize);
-//         for(int i=0;i<numCahceLevels;i++){
-//             L[i]->write_cacheline(addr,cacheLine);
-//         }
-//         for(int i=0;i<MAIN_MEMORY_LATENCY;i++)
-//             wait();
-//     }
-//     if(!dontSetReady)
-//         ready.write(true);
-//   }
-
-//   void doWrite() {
-//     bool hit=false;
-//     uint8_t indexL[numCahceLevels];
-//     for(int i=0;i<numCahceLevels;i++){
-//         while(!L[i]->ready.read())
-//             wait();
-//         if( L[i]->hit.read()){
-//             hit=true;
-//             indexL[i]=1;
-//             break;
-//         }else
-//             indexL[i]=0;
-//     }
-//     if(!hit){
-//         miss.write(true);
-//     }
-//     //the data must be written in rest caches and in main_memory
-//     for(int i=0;i<numCahceLevels;i++)
-//         if(indexL[i])
-//             L[i]->write_cacheline(addr,main_memory.getCacheLine(addr,cachelineSize)); 
-//     main_memory.set(addr.read(),rdata.read());
-//     ready.write(true);
-//   }
-
-  
-
-//   //returns byte in cache-level: level, cache line: lineIndex, at position: index
-//   uint8_t getCacheLineContent(uint32_t level, uint32_t lineIndex, uint32_t index){
-//     if(level<=0 || level>numCahceLevels)
-//         throw std::runtime_error("Number of Cache Levels must be in range [1;3] in method getCacheLineContent.\n");
-//     return L[level-1]->getCacheLineContent(lineIndex,index);
-//   }
-
- 
-// };
-
-// #endif // CACHE_HPP
-
-// #ifndef CACHE_HPP
-// #define CACHE_HPP
-
-// #include "cache_layer.hpp"
-// #include "multiplexer.hpp"
-// #include "main_memory.hpp"
-// #include <systemc>
-// #include <map>
-// #include <vector>
-// #include <memory>
-
-// using namespace sc_core;
-
-// SC_MODULE(CACHE) {
-//   //inputs
-//   sc_in<bool> clk;
-
-//   sc_in<uint32_t> addr, wdata;
-//   sc_in<bool> r, w;
-
-//   sc_in<bool> mem_ready;
-//   sc_in<uint32_t> mem_rdata;
-
-//   //outputs
-//   sc_out<uint32_t> rdata;
-//   sc_out<bool> ready,miss;
-
-//   sc_out<uint32_t> mem_addr,mem_wdata;
-//   sc_out<bool> mem_r,mem_w;
-
-//   //modules
-//   std::vector<std::unique_ptr<CACHE_LAYER>> L;
-//   MAIN_MEMORY main_memory;
-//   MULTIPLEXER_I32 cacheData;
-  
-//   //parameters
-//   uint8_t numCahceLevels;
-//   uint32_t cachelineSize, numLinesL1, numLinesL2, numLinesL3;
-//   uint32_t latencyCacheL1,  latencyCacheL2,  latencyCacheL3;
-//   uint8_t mappingStrategy;
-
-//   //signals
-//   sc_signal<uint32_t> addrL[3],wdataL[3],addrMem,wdataMem;
-//   sc_signal<bool> rL[3],wL[3],rMem,wMem;
-//   sc_signal<uint8_t> sL[3];
-
-//   SC_CTOR(CACHE);
-
-//   CACHE(sc_module_name name, uint8_t numCahceLevels, uint32_t cachelineSize,uint32_t numLinesL1,uint32_t numLinesL2,
-//     uint32_t numLinesL3, uint32_t latencyCacheL1, uint32_t latencyCacheL2, uint32_t latencyCacheL3, uint8_t mappingStrategy)
-//     :sc_module(name),
-//     L(numCahceLevels),
-//     numCahceLevels(numCahceLevels),
-//     cachelineSize(cachelineSize),
-//     numLinesL1(numLinesL1),numLinesL2(numLinesL2),numLinesL3(numLinesL3),
-//     latencyCacheL1(latencyCacheL1),latencyCacheL2(latencyCacheL2),latencyCacheL3(latencyCacheL3),
-//     mappingStrategy(mappingStrategy),
-//     cacheData("cacheData",numCahceLevels,1),
-//     main_memory("main_memory")
-//     { 
-//       switch (numCahceLevels)
-//       {
-//         case 3:
-//           L[2]=(std::make_unique<CACHE_LAYER>("L3",latencyCacheL3,numLinesL3,cachelineSize,mappingStrategy));
-//         case 2:
-//           L[1]=(std::make_unique<CACHE_LAYER>("L2",latencyCacheL2,numLinesL2,cachelineSize,mappingStrategy));
-//         case 1:
-//           L[0]=(std::make_unique<CACHE_LAYER>("L1",latencyCacheL1,numLinesL1,cachelineSize,mappingStrategy));
-//           break;
-//         default:
-//           throw std::runtime_error("Number of Cache Levels must be in range [1;3].\n");
-//           break;
-//       }
-
-//       for(int i=0;i<numCahceLevels;i++){
-//         L[i]->clk(clk);
-//         L[i]->addr(addrL[i]);
-//         addr(addrL[i]);
-//         L[i]->wdata(wdataL[i]);
-//         wdata(wdataL[i]);
-//         L[i]->r(rL[i]);
-//         r(rL[i]);
-//         L[i]->w(wL[i]);
-//         w(wL[i]);
-//         cacheData.in[i](L[i]->data);
-//         rdata(cacheData.out[0]);
-//         sL[i].write(i);
-//       }
-      
-//       main_memory.clk(clk);
-//       main_memory.addr(addrMem);
-//       addr(addrMem);
-//       main_memory.wdata(wdataMem);
-//       wdata(wdataMem);
-//       main_memory.r(rMem);
-//       main_memory.w(wMem);
-
-//     SC_THREAD(behaviour);
-//     sensitive << clk.pos();
-//   }
-
-//   void behaviour() {
-//     while(true) {
-//         wait();
-//       if (r.read()) {
-//         doRead(w.read());
-//       }
-//       if (w.read()) {
-//         doWrite();
-//       }
-//     }
-//   }
-
-//   void doRead(bool dontSetReady) {
-//     bool hit=false;
-//     uint8_t indexL=0;
-//     for(int i=0;i<numCahceLevels;i++){
-//         while(!L[i]->ready.read())
-//             wait();
-//       if( L[i]->hit.read()){
-//         cacheData.select(sL[i]);//choose select bit based on cache-hit from L1 to L3, so rdata will be provided  
-//         wait(SC_ZERO_TIME);
-//         hit=true;
-//         indexL=i;
-//         break;
-//       }
-//     }
-//     if(hit){
-//         for(int i = 0; i <L[indexL]->latency; i++) {
-//             wait();//wait letency for cache, where data was found
-//         }
-//     }else{
-//         //cache miss, read data from main_memory and write it to all 3 caches 
-//         miss.write(true);
-//         //wait till main_memory finish to read the data
-//         do{
-//             wait();
-//         }while(!mem_ready);
-//         //memory latecny will be waited in main_memory function
-//         for(int i=0;i<numCahceLevels;i++){
-//             L[i]->write_data_from_main_memory(NULL,mem_rdata.read());//i dont think there should be argument for addres, bc you dont need adress for fifo or lifo
-//         }
-//     }
-//     if(!dontSetReady)
-//         ready.write(true);
-//   }
-
-//   void doWrite() {
-//     bool hit=false;
-//     uint8_t indexL=0;
-//     for(int i=0;i<numCahceLevels;i++){
-//         while(!L[i]->ready.read())
-//             wait();
-//         if( L[i]->hit.read()){
-//             hit=true;
-//             indexL=i;
-//             break;
-//       }
-//     }
-//     if(!hit){
-//         miss.write(true);
-//         indexL=255;
-//     }
-//     //the data must be written in rest caches and in main_memory
-//     for(int i=0;i<numCahceLevels;i++)
-//         if(i!=indexL)
-//             L[i]->write_data_from_main_memory(NULL,rdata.read());//rdata was set in cache_layer 
-//     main_memory.set(addr.read(),rdata.read());
-//     ready.write(true);
-//   }
-
-  
-
-//   //returns byte in cache-level: level, cache line: lineIndex, at position: index
-//   uint8_t getCacheLineContent(uint32_t level, uint32_t lineIndex, uint32_t index){
-//     if(level<=0 || level>numCahceLevels)
-//         throw std::runtime_error("Number of Cache Levels must be in range [1;3] in method getCacheLineContent.\n");
-//     return L[level-1]->getCacheLineContent(lineIndex,index);
-//   }
-
- 
-// };
-
-// #endif // CACHE_HPP

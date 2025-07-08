@@ -15,19 +15,21 @@ SC_MODULE(MAIN_MEMORY) {
   sc_in<bool> r;
   sc_in<bool> w;
 
-  sc_out<uint32_t> rdata;
+  std::vector<sc_out<uint8_t>> cacheline;
   sc_out<bool> ready;
 
   std::map<uint32_t, uint8_t> memory;
 
-  SC_CTOR(MAIN_MEMORY) {
+  SC_CTOR(MAIN_MEMORY);
+  MAIN_MEMORY(sc_module_name name, uint32_t cacheline_size):sc_module(name),cacheline(cacheline_size){
     SC_THREAD(behaviour);
     sensitive << clk.pos();
-  }
+  } 
 
   void behaviour() {
     while(true) {
       wait();
+      ready.write(false);
       if (r.read()) {
         doRead(w.read());
       }
@@ -39,14 +41,14 @@ SC_MODULE(MAIN_MEMORY) {
 
   void doRead(bool dontSetReady) {
     ready.write(false);
+    std::vector<uint8_t> result = getCacheLine(addr.read());
 
-    uint32_t result = get(addr.read());
-
-    // for(int i = 0; i < LATENCY; i++) {
-    //   wait();
-    // }
-
-    rdata.write(result);
+    for(int i = 0; i < LATENCY; i++) {
+      wait();
+    }
+    for(int i=0;i<cacheline.size();i++){
+      cacheline[i].write(result[i]);
+    }
     if(!dontSetReady) {
       ready.write(true);
     }
@@ -56,9 +58,9 @@ SC_MODULE(MAIN_MEMORY) {
     ready.write(false);
     set(addr.read(), wdata.read());
 
-    // for(int i = 0; i < LATENCY; i++) {
-    //   wait();
-    // }
+    for(int i = 0; i < LATENCY; i++) {
+      wait();
+    }
 
     ready.write(true);
   }
@@ -77,28 +79,36 @@ SC_MODULE(MAIN_MEMORY) {
     return result;
   }
 
-
+  void print(){
+    for(int i=0;i<memory.size();i++){
+      if(i%4==0) std::cout << "mem[0x" << std::hex << (i) << "] ";
+      std::cout << (int)memory[i]<<" " ;
+      if((i+1)%4==0) std::cout<< std::endl;
+    }
+  }
 
   void set(uint32_t address, uint32_t value) {
     for (int i = 0; i < 4; i++) {
       memory[address + i] = (value >> (i * 8)) & 0xFF;
-      // std::cout << "mem[0x" << std::hex << (address+i)
-      //         << "] = 0x" << (int)memory[address+i] << std::endl;
       if(address + i == UINT32_MAX) {
         break;
       }
     }
+    std::vector<uint8_t> result = getCacheLine(address);
+    for(int i=0;i<cacheline.size();i++){
+      cacheline[i].write(result[i]);
+    }
+
   }
 
   //get whole cache line wenn cache miss
-  std::vector<uint8_t> getCacheLine(uint32_t address, uint32_t cacheLineSize){
-    if(cacheLineSize==0) throw std::runtime_error("Dividing by zero in getCacheLine.\n");
-    uint32_t start=address - (address/cacheLineSize);
-    std::vector<uint8_t> result(cacheLineSize);
-    for(int i=0;i<cacheLineSize;i++){
+  std::vector<uint8_t> getCacheLine(uint32_t address){
+    uint32_t start=start = address & ~(cacheline.size() - 1);
+    std::vector<uint8_t> result(cacheline.size());
+    for(int i=0;i<cacheline.size();i++){
       uint8_t value = 0;
-      if(memory.find(address + i) != memory.end()) {
-        value = memory[address + i];
+      if(memory.find(start + i) != memory.end()) {
+        value = memory[start + i];
       }
       result[i]=value;
     }
