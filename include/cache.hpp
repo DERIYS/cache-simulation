@@ -168,9 +168,11 @@ SC_MODULE(CACHE) {
     uint8_t indexL=0;
     for(int i=0;i<num_cahce_levels;i++){
       //wait till cache level will be ready with reading
-        while(!L[i]->ready.read()){
-            wait();
-        }
+        // do{
+        //     wait(); 
+        // }while(!L[i]->ready.read());
+        while(!L[i]->ready.read())
+          wait();
         //if data was find in cache level->defines select bits for multiplexers
         if( !L[i]->miss.read()){
           miss_mux_select.write(i);
@@ -183,6 +185,7 @@ SC_MODULE(CACHE) {
           break;
         }
     }
+    r_mux_in.write(false);
     //if it was hit at some of cache levels
     if(hit){
       rdata.write(cache_data.out[0].read());
@@ -213,7 +216,7 @@ SC_MODULE(CACHE) {
         rdata.write( L[0]->extract_word(t,addr.read() & (cacheline_size-1)));
     }
     if(!dontSetReady){
-         ready.write(cache_ready.out[0].read());
+         ready.write(true);
     }
      miss.write(cache_miss.out[0].read());
   }
@@ -222,8 +225,12 @@ SC_MODULE(CACHE) {
     bool hit[num_cahce_levels];
     uint8_t indexL[num_cahce_levels];
     for(int i=0;i<num_cahce_levels;i++){
+        // do{
+        //     wait();
+        //  }while(!L[i]->ready.read());
         while(!L[i]->ready.read())
-            wait();
+          wait();
+
         if( !L[i]->miss.read()){
             hit[i]=true;
             miss_mux_select.write(i);
@@ -232,14 +239,18 @@ SC_MODULE(CACHE) {
         }else
             hit[i]=false;
     }
+    w_mux_in.write(false);
+    wait(SC_ZERO_TIME);
     if(test) std::cout<<"hit caches in write: L[1]: "<<hit[0]<<", L[2]: "<<hit[1]<<", L[3]: "<<hit[2]<<"\n";
     mem_addr.write(addr.read());
     mem_wdata.write(wdata.read());
-    mem_r.write(r.read());mem_w.write(w.read());
+    mem_w.write(true);wait(); mem_w.write(false);
+    //mem_r.write(r.read());mem_w.write(w.read());
     //the data must be written in rest caches and in main_memory
-    while(!mem_ready.read())
+    do{
       wait();
-    mem_w.write(false);
+    }while(!mem_ready.read());
+    
     std::vector<uint8_t> t;
     for(int i=0;i<cacheline_size;i++){
       t.push_back(mem_cacheline[i].read());
@@ -248,7 +259,7 @@ SC_MODULE(CACHE) {
         if(!hit[i]){
             L[i]->write_cacheline(addr.read(),t); 
         }
-    ready.write(cache_ready.out[0].read());
+    ready.write(true);
     miss.write(cache_miss.out[0].read());
   }
 

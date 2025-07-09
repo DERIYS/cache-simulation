@@ -31,6 +31,7 @@ SC_MODULE(MAIN_MEMORY) {
       wait();
       ready.write(false);
       if (r.read()) {
+
         doRead(w.read());
       }
       if (w.read()) {
@@ -61,7 +62,6 @@ SC_MODULE(MAIN_MEMORY) {
     for(int i = 0; i < LATENCY; i++) {
       wait();
     }
-
     ready.write(true);
   }
 
@@ -103,7 +103,7 @@ SC_MODULE(MAIN_MEMORY) {
 
   //get whole cache line wenn cache miss
   std::vector<uint8_t> getCacheLine(uint32_t address){
-    uint32_t start=start = address & ~(cacheline.size() - 1);
+    uint32_t start = address & ~(cacheline.size() - 1);
     std::vector<uint8_t> result(cacheline.size());
     for(int i=0;i<cacheline.size();i++){
       uint8_t value = 0;
@@ -114,6 +114,7 @@ SC_MODULE(MAIN_MEMORY) {
     }
     return result;
   }
+  
 
 };
 

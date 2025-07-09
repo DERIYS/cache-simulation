@@ -70,7 +70,7 @@ Result run_simulation(
     result.cycles = 0;
     result.hits = 0;
     result.misses = 0;
-
+        cache.test=true;
     Request request;
 
     for (size_t request_index = 0; request_index < numRequests; request_index++)
@@ -80,9 +80,13 @@ Result run_simulation(
         wdata.write(request.data);
         r.write(!request.w);
         w.write(request.w);
-        printf("Request no. %i: ADDR: %u, WDATA: %u, R: %u, W: %u\n", request_index, request.addr, request.data, !request.w, request.w);
+        printf("Request no. %li: ADDR: %u, WDATA: %u, R: %u, W: %u\n", request_index, request.addr, request.data, !request.w, request.w);\
+        bool flag=false;
         do 
-        {
+        {   
+            if(flag){
+                r.write(false);w.write(false);
+            }flag=true;
             std::cout << "going in while on cycle: " << result.cycles << std::endl;
             if (result.cycles >= cycles) {
                 std::cout<<"leaving bc cycles"<<std::endl;
@@ -98,6 +102,7 @@ Result run_simulation(
             result.misses++;
         else
             result.hits++;
+        r.write(false); w.write(false);
     }
 
     return result;
