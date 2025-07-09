@@ -134,9 +134,17 @@ SC_MODULE(CACHE) {
     sensitive << clk.pos();
   }
 
+  void print_caches(){
+    for(int i = 0; i < num_cahce_levels; i++){
+        L[i]->print(i+1);
+    }std::cout<<"\n";
+}
+
   void behaviour() {
     while(true) {
         wait();
+        ready.write(false);
+        miss.write(false);
         //set input signals in multiplexer, which forward them to each cache level
         w_mux_in.write(w.read());
         r_mux_in.write(r.read());
@@ -149,8 +157,6 @@ SC_MODULE(CACHE) {
         if (w.read()) {
             doWrite();
         }
-        
-
     }
   }
 

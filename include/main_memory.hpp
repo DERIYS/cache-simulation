@@ -5,7 +5,7 @@
 #include <map>
 using namespace sc_core;
 
-#define LATENCY 1
+#define LATENCY 10
 
 SC_MODULE(MAIN_MEMORY) {
   sc_in<bool> clk;

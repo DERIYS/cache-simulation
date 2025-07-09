@@ -100,10 +100,10 @@ clean:
 	rm -rf coverage-report
 
 run: $(TARGET)
-	./cache --cycles 1000 test/inputs/valid_data.csv
+	./cache --cycles 1000 input.csv
 
 run-debug: $(TARGET)
-	./cache -d --cycles 1000 test/inputs/valid_data.csv
+	./cache -d --cycles 1000 input.csv
 
 run-tests: $(TARGET)
 	python3 test/cache_tests.py

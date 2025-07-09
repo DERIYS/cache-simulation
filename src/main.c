@@ -258,8 +258,10 @@ int main(int argc, char** argv)
     /* If debug mode enabled, print requests to the console output */
     debug ? (void)print_requests(requests, requests_size) : (void)0;
     
+    
+
     /* Run C++ SystemC simulation */
-    run_simulation(
+    Result result = run_simulation(
                 cycles,
          traceFileName, /*tracefile*/ 
         numCacheLevels,
@@ -274,6 +276,8 @@ int main(int argc, char** argv)
          requests_size,
               requests
     );
+
+    printf("cycles: %u, hits: %u, misses: %u\n", result.cycles, result.hits, result.misses);
 
     /* Normal cleanup */
     free(requests);
