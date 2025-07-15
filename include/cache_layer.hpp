@@ -190,11 +190,12 @@ SC_MODULE(CACHE_LAYER)
   {
     uint32_t offset, tag;
     set_offset_index_tag(addr.read(), &offset, nullptr, tag);
-
+    if (test_mode) printf("Address: %u, Offset: %u, Tag: %u, Error: %i\n", addr.read(), offset, tag, error);
     auto it = lru_map.find(tag);
     if (!error && it != lru_map.end())
     { // tag in lru_map -> cache hit
       // Move the according node in lru_list to the beginning and update the map value
+      if (test_mode) printf("Cache hit at tag: %u\n", tag);
       uint32_t index = *it->second;    // this extracts the index of the needed cacheline from the map
       lru_list.erase(it->second);      // erasing the node associated with the tag from lru_list
       lru_list.push_front(index);      // pushing it to the beginning
@@ -225,9 +226,11 @@ SC_MODULE(CACHE_LAYER)
       // Latency will be handled in the main cache.hpp systemc module as it is impossible to communicate with other cache levels inside this module
       // to ensure that the right cache layer's latency will be waited (L1 level latency if found in L1, L2 if in L2 etc.)
       wait();
+      if (test_mode) printf("Setting ready to false\n");
       reset_signals();
       if (r.read() || w.read())
       {
+        if (test_mode) printf("Starting access with address: %u, r: %u, w: %u\n", addr.read(), r.read(), w.read());
         if (mapping_strategy == DIRECT_MAPPED)
           access_direct_mapped();
         else if (mapping_strategy == FULLY_ASSOCIATIVE)
@@ -240,7 +243,10 @@ SC_MODULE(CACHE_LAYER)
           return;
         }
         ready.write(true);
+        if (test_mode) printf("Setting ready to true\n");
+        wait(SC_ZERO_TIME);
       }
+      if (test_mode) printf("Waiting for next clock cycle...\n");
     }
   }
 

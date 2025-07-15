@@ -5,7 +5,7 @@
 #include <map>
 using namespace sc_core;
 
-#define LATENCY 10
+#define LATENCY 50
 
 SC_MODULE(MAIN_MEMORY) {
   sc_in<bool> clk;
@@ -60,9 +60,12 @@ SC_MODULE(MAIN_MEMORY) {
     set(addr.read(), wdata.read());
 
     for(int i = 0; i < LATENCY; i++) {
+      printf("MAIN_MEM: Waiting for main memory to be ready on cycle %i...\n", i);
       wait();
     }
     ready.write(true);
+    printf("MAIN_MEM: setting ready to true.\n");
+    wait(SC_ZERO_TIME);
   }
 
   uint32_t get(uint32_t address) {
