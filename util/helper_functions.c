@@ -60,6 +60,23 @@ void print_requests(Request* requests, size_t size){
 }
 
 /*
+   * @brief               Checks if the given filename is valid for a trace file
+   *
+   * @param filename      The name of the file to check
+   * 
+   * @return              true if the filename is valid, false otherwise
+*/
+bool is_valid_filename(const char *filename) {
+    FILE* file;
+    if (!(file = fopen(filename, "w"))) {
+        fprintf(stderr, "Invalid trace file name: %s\n", filename);
+        return false;
+    }
+    fclose(file);
+    return true;
+}
+
+/*
    * @brief              
    *
    * @param filename    The path to the file to read.  

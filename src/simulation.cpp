@@ -70,10 +70,22 @@ Result run_simulation(
     result.cycles = 0;
     result.hits = 0;
     result.misses = 0;
-    cache.test=true;
-    for (int i = 0; i < cache.num_cahce_levels; i++) cache.L[i]->test_mode = true;
     Request request;
     uint32_t additional_cycles = 0;
+    sc_trace_file *trace = NULL;
+
+    if (tracefile != NULL)
+    {
+        sc_trace_file* trace = sc_create_vcd_trace_file(tracefile);
+        sc_trace(trace, clk, "clk");
+        sc_trace(trace, addr, "addr");
+        sc_trace(trace, wdata, "wdata");
+        sc_trace(trace, r, "r");
+        sc_trace(trace, w, "w");
+        sc_trace(trace, rdata, "rdata");
+        sc_trace(trace, ready, "ready");
+        sc_trace(trace, miss, "miss");
+    }
 
     for (size_t request_index = 0; request_index < numRequests; request_index++)
     {
@@ -84,14 +96,9 @@ Result run_simulation(
         w.write(request.w);
         if (!request.w) additional_cycles += 2;
         else additional_cycles += 3;
-        printf("Request no. %li: ADDR: %u, WDATA: %u, R: %u, W: %u\n", request_index, request.addr, request.data, !request.w, request.w);\
-        bool flag=false;
+        printf("Request #%li: ADDR: %u, WDATA: %u, R: %u, W: %u\n", request_index, request.addr, request.data, !request.w, request.w);\
         do 
-        {   
-            if(flag){
-                r.write(false);w.write(false);
-            }flag=true;
-            std::cout << "going in while on cycle: " << dec << result.cycles << std::endl;
+        {
             if (result.cycles >= cycles) {
                 std::cout<<"leaving bc cycles"<<std::endl;
                 return result;
@@ -106,6 +113,10 @@ Result run_simulation(
         else
             result.hits++;
         r.write(false); w.write(false);
+    }
+
+    if (tracefile != NULL) {
+        sc_close_vcd_trace_file(trace);
     }
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          result.cycles -= additional_cycles;
     return result;

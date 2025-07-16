@@ -1,6 +1,7 @@
 #ifndef CACHE_LAYER_HPP
 #define CACHE_LAYER_HPP
 
+#include "debug.h"
 #include <list>
 #include <systemc>
 #include <systemc.h>
@@ -39,19 +40,20 @@ SC_MODULE(CACHE_LAYER)
   std::list<uint32_t> lru_list;                                        // Indexes of cache_memory in LRU order (head: MRU, tail: LRU)
   std::unordered_map<uint32_t, std::list<uint32_t>::iterator> lru_map; // Maps tag to lru_list node
 
-  // just for testing, can be deleted spater
-  void print(int l)
+  // Prints the content of the cache memory for debugging purposes, in very even and readable format
+  void print_internal_memory(int l)
   {
-    std::cout << "L: " << l << "\n";
-    for (int i = 0; i < num_lines; i++)
+    std::cout << "CACHE_LAYER " << l << ": Cache Memory Content:\n";
+    std::cout << "Index\tTag\tValid\tData\n";
+    for (size_t i = 0; i < cache_memory.size(); ++i)
     {
-      for (int j = 0; j < cacheline_size; j++)
+      const auto &line = cache_memory[i];
+      std::cout << i << "\t" << line.tag << "\t" << (line.valid ? "true" : "false") << "\t";
+      for (const auto &byte : line.data)
       {
-        std::cout << " " << std::hex << (int)cache_memory[i].data[j];
-        if ((j + 1) % 4 == 0)
-          cout << "|";
+        std::cout << std::hex << static_cast<int>(byte) << " ";
       }
-      std::cout << "\n";
+      std::cout << std::dec << "\n";
     }
   }
 
@@ -178,10 +180,6 @@ SC_MODULE(CACHE_LAYER)
         write_data(cache_memory[index].data, wdata.read(), offset);
       return;
     }
-    // else {
-    //   cout << "Cache miss at index: " << index << ", tag: " << std::hex << tag << std::dec << endl;
-    //   cout << cache_memory[index].valid << " " << hex << cache_memory[index].tag << dec << endl;
-    // }
     miss.write(true);
   }
 
@@ -190,12 +188,12 @@ SC_MODULE(CACHE_LAYER)
   {
     uint32_t offset, tag;
     set_offset_index_tag(addr.read(), &offset, nullptr, tag);
-    if (test_mode) printf("Address: %u, Offset: %u, Tag: %u, Error: %i\n", addr.read(), offset, tag, error);
+    DEBUG_PRINT("CACHE_LAYER: Accessing fully-associative cache with address: %u, offset: %u, tag: %u\n", addr.read(), offset, tag);
     auto it = lru_map.find(tag);
     if (!error && it != lru_map.end())
     { // tag in lru_map -> cache hit
       // Move the according node in lru_list to the beginning and update the map value
-      if (test_mode) printf("Cache hit at tag: %u\n", tag);
+      DEBUG_PRINT("CACHE_LAYER: Cache hit at tag: %u, index: %u\n", tag, *it->second);
       uint32_t index = *it->second;    // this extracts the index of the needed cacheline from the map
       lru_list.erase(it->second);      // erasing the node associated with the tag from lru_list
       lru_list.push_front(index);      // pushing it to the beginning
@@ -226,11 +224,11 @@ SC_MODULE(CACHE_LAYER)
       // Latency will be handled in the main cache.hpp systemc module as it is impossible to communicate with other cache levels inside this module
       // to ensure that the right cache layer's latency will be waited (L1 level latency if found in L1, L2 if in L2 etc.)
       wait();
-      if (test_mode) printf("Setting ready to false\n");
+      DEBUG_PRINT("CACHE_LAYER: Behaviour thread running...\n");
       reset_signals();
       if (r.read() || w.read())
       {
-        if (test_mode) printf("Starting access with address: %u, r: %u, w: %u\n", addr.read(), r.read(), w.read());
+        DEBUG_PRINT("CACHE_LAYER: Accessing cache with address: %u, r: %u, w: %u\n", addr.read(), r.read(), w.read());
         if (mapping_strategy == DIRECT_MAPPED)
           access_direct_mapped();
         else if (mapping_strategy == FULLY_ASSOCIATIVE)
@@ -243,10 +241,10 @@ SC_MODULE(CACHE_LAYER)
           return;
         }
         ready.write(true);
-        if (test_mode) printf("Setting ready to true\n");
+        DEBUG_PRINT("CACHE_LAYER: Access completed, ready signal set to true.\n");
         wait(SC_ZERO_TIME);
       }
-      if (test_mode) printf("Waiting for next clock cycle...\n");
+      DEBUG_PRINT("CACHE_LAYER: Waiting for next clock cycle...\n");
     }
   }
 
@@ -259,6 +257,7 @@ SC_MODULE(CACHE_LAYER)
     {
       if (!test_mode)
         throw std::runtime_error("InvalidArgumentException: cacheline_size and num_lines must be powers of 2");
+      error = true;
       return;
     }
 

@@ -10,6 +10,7 @@
 #include "debug.h"
 
 void print_help();
+bool is_valid_filename(const char *filename);
 char* read_file_to_buffer(const char* filename);
 void print_requests(Request* requests, size_t size);
 

@@ -4,6 +4,7 @@
 #include "cache_layer.hpp"
 #include "multiplexer.hpp"
 #include "main_memory.hpp"
+#include "debug.h"
 #include <systemc>
 #include <map>
 #include <vector>
@@ -16,7 +17,6 @@ using namespace sc_core;
 
 SC_MODULE(CACHE)
 {
-  bool test;
   // inputs
   sc_in<bool> clk;
 
@@ -160,7 +160,7 @@ SC_MODULE(CACHE)
   {
     for (int i = 0; i < num_cahce_levels; i++)
     {
-      L[i]->print(i + 1);
+      L[i]->print_internal_memory(i + 1);
     }
     std::cout << "\n";
   }
@@ -170,8 +170,7 @@ SC_MODULE(CACHE)
     while (true)
     {
       wait();
-      if (test)
-        printf("MAIN: Cache behaviour thread running...\n");
+      DEBUG_PRINT("MAIN: Cache behaviour thread running...\n");
       ready.write(false);
       miss.write(false);
       rdata.write(0);
@@ -181,8 +180,7 @@ SC_MODULE(CACHE)
       wdata_mux_in.write(wdata.read());
       addr_mux_in.write(addr.read());
       wait(SC_ZERO_TIME);
-      if (test)
-        printf("MAIN: Input signals set in multiplexers.\n");
+      DEBUG_PRINT("MAIN: Input signals set in multiplexers.\n");
       if (r.read())
       {
         doRead(w.read());
@@ -192,6 +190,10 @@ SC_MODULE(CACHE)
         doWrite();
       }
     }
+  }
+
+  void wait_zero_cachetime() {
+    wait(CACHE_ZERO_TIME);
   }
 
   // waiting till each cache level from low to high will be ready
@@ -206,9 +208,8 @@ SC_MODULE(CACHE)
       // wait till cache level will be ready with reading
       while (!L[i]->ready.read())
       {
-        if (test)
-          printf("Waiting for cache level %d to be ready...\n", i);
-        wait(CACHE_ZERO_TIME);
+        DEBUG_PRINT("MAIN: Waiting for cache level %d to be ready...\n", i);
+        wait_zero_cachetime();
       }
       // if data was find in cache level->defines select bits for multiplexers
       if (!L[i]->miss.read())
@@ -219,8 +220,7 @@ SC_MODULE(CACHE)
         wait(SC_ZERO_TIME);
         hit = true;
         indexL = i;
-        if (test)
-          std::cout << "hit cache in read: L[" << i << "]: " << hit << "\n";
+        DEBUG_PRINT("MAIN: Hit in L[%d]: %s\n", i, hit ? "true" : "false");
         break;
       }
     }
@@ -236,8 +236,7 @@ SC_MODULE(CACHE)
     }
     else
     {
-      if (test)
-        std::cout << "miss cache in read \n";
+      DEBUG_PRINT("MAIN: Miss in all cache levels.\n");
       mem_addr.write(addr.read());
       mem_wdata.write(wdata.read());
       mem_r.write(r.read());
@@ -249,7 +248,7 @@ SC_MODULE(CACHE)
       // wait till main_memory finish to read the data
       while (!mem_ready.read())
       {
-        wait(CACHE_ZERO_TIME);
+        wait_zero_cachetime();
       }
       // memory latecny will be waited in main_memory function
       std::vector<uint8_t> t;
@@ -277,7 +276,7 @@ SC_MODULE(CACHE)
     for (int i = 0; i < num_cahce_levels; i++)
     {
       while (!L[i]->ready.read())
-        wait(CACHE_ZERO_TIME);
+        wait_zero_cachetime();
 
       if (!L[i]->miss.read())
       {
@@ -291,8 +290,8 @@ SC_MODULE(CACHE)
     }
     w_mux_in.write(false);
     wait(SC_ZERO_TIME);
-    if (test)
-      std::cout << "hit caches in write: L[1]: " << hit[0] << ", L[2]: " << hit[1] << ", L[3]: " << hit[2] << "\n";
+    DEBUG_PRINT("MAIN: Input signals set in multiplexers.\n");
+    DEBUG_PRINT("MAIN: Hit caches in write: L[1]: %s, L[2]: %s, L[3]: %s\n", hit[0] ? "true" : "false", hit[1] ? "true" : "false", hit[2] ? "true" : "false");
     mem_addr.write(addr.read());
     mem_wdata.write(wdata.read());
     mem_w.write(true);
@@ -302,9 +301,8 @@ SC_MODULE(CACHE)
     // the data must be written in rest caches and in main_memory
     while (!mem_ready.read())
     {
-      if (test)
-        printf("Waiting for main memory to be ready...\n");
-      wait(CACHE_ZERO_TIME);
+      DEBUG_PRINT("MAIN: Waiting for main memory to be ready...\n");
+      wait_zero_cachetime();
     }
 
     std::vector<uint8_t> t;

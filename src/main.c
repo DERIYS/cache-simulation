@@ -81,6 +81,9 @@ int main(int argc, char** argv)
             /* Tracefile specified. It should be created during simulation */
             case 'f':
                 traceFileName = optarg;
+                if (!(traceFileName)) {
+                    return EX_DATAERR;
+                }
                 DEBUG_PRINT("Tracefile set\n");
                 break;
 
