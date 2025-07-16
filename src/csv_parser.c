@@ -1,4 +1,5 @@
 #include "../include/csv_parser.h"
+#include <ctype.h>
 
 /*
    * @brief               Splits the content by line and returns pointer to new line in content
@@ -21,10 +22,29 @@ char* split_next_line(const char* content, char* type, char* address, char* data
     char* line_copy = strndup(content, line_len);
     if (!line_copy) return NULL;
 
+    /* Skip empty or whitespace-only lines */
+    bool emptyLine = true;
+    for (size_t i = 0; i < line_len; i++) {
+        if (!isspace((unsigned char)line_copy[i])){
+            emptyLine = false;
+            break;
+        }
+    }
+
+    if (emptyLine){
+        free(line_copy);
+        fprintf(stderr, "The file contains empty lines\n");
+        return PARSE_ERROR;
+    }
+
     /* Count commas to ensure correct CSV format */
     int comma_count = 0;
     for (size_t i = 0; i < line_len; i++){
         if (content[i] == ',') comma_count++;
+        else if (content[i] == '\0' || content[i] == '\n') {
+            free(line_copy);
+            return NULL;
+        }
     }
     if (comma_count < 2){
         fprintf(stderr, "Missing fields: less than 3 columns\n");
