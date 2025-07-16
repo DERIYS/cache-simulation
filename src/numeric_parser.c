@@ -19,7 +19,7 @@
    *                is the one, where argument should be saved. When passing those parametrs as not intended (both are NULL or both aren't)
    *                then it will simply return false, however you should not do as not intended.         
 */
-bool parseUnsignedInt(const char* arg, uint8_t* out8, uint32_t* out32, const char* name) {
+bool parse_unsigned_int(const char* arg, uint8_t* out8, uint32_t* out32, const char* name) {
 
     /* Not intended use of this function */
     if ((out8 && out32) || (!out8 && !out32)) {

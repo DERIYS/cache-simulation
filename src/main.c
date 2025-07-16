@@ -1,17 +1,10 @@
 #include <getopt.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <errno.h>
 #include <sysexits.h>
-#include <sys/stat.h>
 
-#include "../include/request.h"
-#include "../include/default.h"
 #include "../include/simulation.hpp"
 #include "../include/csv_parser.h"
 #include "../include/numeric_parser.h"
 #include "../include/helper_functions.h"
-#include "../include/debug.h"
 
 /* Debug flag */
 bool debug = false;
@@ -60,7 +53,7 @@ int main(int argc, char** argv)
            All numeric inputs are validated and rejected in the case of negative values or invalid formats.
            Programm exits with meaningfull error. */
 
-        /* Attention: following options parsing for numeric values heavily relies on parseUnsignedInt function.
+        /* Attention: following options parsing for numeric values heavily relies on parse_unsigned_int function.
                       For a better understanding of its usage and behaviour please check src/numeric_parser.c  */
 
         switch (opt)
@@ -71,7 +64,7 @@ int main(int argc, char** argv)
             case 'c':
 
                 /* Passes argument for verification, cycles as uint32, where the argument will be stored, and string indicating error, if needed */
-                if (!parseUnsignedInt(optarg, IS_32BIT, &cycles, "cycles value")) {
+                if (!parse_unsigned_int(optarg, IS_32BIT, &cycles, "cycles value")) {
                     return EX_DATAERR;
                 }
 
@@ -100,7 +93,7 @@ int main(int argc, char** argv)
             case 'C':
 
                 /* Passes argument for verification, cachelineSize as uint32, where the argument will be stored, and string indicating error, if needed */
-                if (!parseUnsignedInt(optarg, IS_32BIT, &cachelineSize, "cache line size")) {
+                if (!parse_unsigned_int(optarg, IS_32BIT, &cachelineSize, "cache line size")) {
                     return EX_DATAERR;
                 }
 
@@ -111,7 +104,7 @@ int main(int argc, char** argv)
             case 'L':
                 
                 /* Passes argument for verification, numLinesL1 as uint32, where the argument will be stored, and string indicating error, if needed */
-                if (!parseUnsignedInt(optarg, IS_32BIT, &numLinesL1, "cache L1 line value")) {
+                if (!parse_unsigned_int(optarg, IS_32BIT, &numLinesL1, "cache L1 line value")) {
                     return EX_DATAERR;
                 }
           
@@ -122,7 +115,7 @@ int main(int argc, char** argv)
             case 'M':
                 
                 /* Passes argument for verification, numLinesL2 as uint32, where the argument will be stored, and string indicating error, if needed */
-                if (!parseUnsignedInt(optarg, IS_32BIT , &numLinesL2, "cache L2 line value")) {
+                if (!parse_unsigned_int(optarg, IS_32BIT , &numLinesL2, "cache L2 line value")) {
                     return EX_DATAERR;
                 }
 
@@ -133,7 +126,7 @@ int main(int argc, char** argv)
             case 'N':
                 
                 /* Passes argument for verification, numLinesL3 as uint32, where the argument will be stored, and string indicating error, if needed */
-                if (!parseUnsignedInt(optarg, IS_32BIT ,&numLinesL3, "cache L3 line value")) {
+                if (!parse_unsigned_int(optarg, IS_32BIT ,&numLinesL3, "cache L3 line value")) {
                     return EX_DATAERR;
                 }
 
@@ -144,7 +137,7 @@ int main(int argc, char** argv)
             case 'l':
                 
                 /* Passes argument for verification, latencyCacheL1 as uint32, where the argument will be stored, and string indicating error, if needed */
-                if (!parseUnsignedInt(optarg, IS_32BIT, &latencyCacheL1, "cache L1 latency value")) {
+                if (!parse_unsigned_int(optarg, IS_32BIT, &latencyCacheL1, "cache L1 latency value")) {
                     return EX_DATAERR;
                 }
 
@@ -155,7 +148,7 @@ int main(int argc, char** argv)
             case 'm':
                 
                 /* Passes argument for verification, latencyCacheL2 as uint32, where the argument will be stored, and string indicating error, if needed */
-                if (!parseUnsignedInt(optarg, IS_32BIT,  &latencyCacheL2, "cache L2 latency value")) {
+                if (!parse_unsigned_int(optarg, IS_32BIT,  &latencyCacheL2, "cache L2 latency value")) {
                     return EX_DATAERR;
                 }
 
@@ -166,7 +159,7 @@ int main(int argc, char** argv)
             case 'n':
 
                 /* Passes argument for verification, latencyCache3 as uint32, where the argument will be stored, and string indicating error, if needed */
-                if (!parseUnsignedInt(optarg, IS_32BIT, &latencyCacheL3, "cache L3 latency value")) {
+                if (!parse_unsigned_int(optarg, IS_32BIT, &latencyCacheL3, "cache L3 latency value")) {
                     return EX_DATAERR;
                 }
 
@@ -177,7 +170,7 @@ int main(int argc, char** argv)
             case 'e':
 
                 /* Passes argument for verification, numCacheLevels as uint8, where the argument will be stored, and string indicating error, if needed */
-                if (!parseUnsignedInt(optarg, &numCacheLevels, IS_8BIT , "number of cache levels")) {
+                if (!parse_unsigned_int(optarg, &numCacheLevels, IS_8BIT , "number of cache levels")) {
                     return EX_DATAERR;
                 }
 
@@ -193,7 +186,7 @@ int main(int argc, char** argv)
             case 'S':
                 
                 /* Passes argument for verification, mappingStrategy as uint8, where the argument will be stored, and string indicating error, if needed */
-                if (!parseUnsignedInt(optarg, &mappingStrategy, IS_8BIT ,"mapping strategy")) {
+                if (!parse_unsigned_int(optarg, &mappingStrategy, IS_8BIT ,"mapping strategy")) {
                     return EX_DATAERR;
                 }
 
@@ -243,14 +236,14 @@ int main(int argc, char** argv)
     }
 
     /* Count how many requests in order to allocate memory accordingly */
-    uint32_t requests_size = countRequests(content);
+    uint32_t requests_size = count_requests(content);
 
     /* Allocate memory for requests */
     Request* requests = (Request*) calloc(requests_size, sizeof(Request));
 
     /* Try to form requests */
     int err;
-    err = formRequests(content, requests);
+    err = form_requests(content, requests);
     if (err != 0) {
         /* In the case of error, cleanup and return with an error*/
         free(requests);

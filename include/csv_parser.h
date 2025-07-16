@@ -13,9 +13,9 @@
 #define VALUE_ERROR (uint32_t)(-1)
 
 char* split_next_line(const char* content, char* type, char* address, char* data);
-Request formSingleRequest(char* type, char* address, char* data, bool* ok);
-unsigned long countRequests(char* content);
-int formRequests(char* content, Request* requests);
-uint32_t validateValue(char* value);
+Request form_single_request(char* type, char* address, char* data, bool* ok);
+unsigned long count_requests(char* content);
+int form_requests(char* content, Request* requests);
+uint32_t validate_value(char* value);
 
 #endif // CSV_PARSER_H
