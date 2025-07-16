@@ -44,7 +44,7 @@ SC_MODULE(MAIN_MEMORY) {
     ready.write(false);
     std::vector<uint8_t> result = getCacheLine(addr.read());
 
-    for(int i = 0; i < LATENCY - 1; i++) {
+    for(int i = 0; i < LATENCY - 3; i++) {
       wait();
     }
     for(int i=0;i<cacheline.size();i++){
@@ -59,7 +59,7 @@ SC_MODULE(MAIN_MEMORY) {
     ready.write(false);
     set(addr.read(), wdata.read());
 
-    for(int i = 0; i < LATENCY - 1; i++) {
+    for(int i = 0; i < LATENCY - 3; i++) {
       printf("MAIN_MEM: Waiting for main memory to be ready on cycle %i...\n", i);
       wait();
     }

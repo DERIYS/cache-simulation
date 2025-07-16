@@ -95,7 +95,6 @@ Result run_simulation(
         r.write(!request.w);
         w.write(request.w);
         if (!request.w) additional_cycles += 2;
-        else additional_cycles += 3;
         printf("Request #%li: ADDR: %u, WDATA: %u, R: %u, W: %u\n", request_index, request.addr, request.data, !request.w, request.w);\
         do 
         {
