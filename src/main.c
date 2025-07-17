@@ -2,9 +2,9 @@
 #include <sysexits.h>
 
 #include "../include/simulation.hpp"
-#include "../include/csv_parser.h"
-#include "../include/numeric_parser.h"
-#include "../include/helper_functions.h"
+#include "../include/parsers/csv_parser.h"
+#include "../include/parsers/numeric_parser.h"
+#include "../util/helper_functions.h"
 
 /* Debug flag */
 bool debug = false;

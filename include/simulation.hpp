@@ -1,8 +1,8 @@
 #ifndef SIMULATION_HPP
 #define SIMULATION_HPP
 
-#include "request.h"
-#include "result.h"
+#include "structs/request.h"
+#include "structs/result.h"
 
 #ifdef __cplusplus
 extern "C" {

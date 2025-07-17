@@ -1,4 +1,4 @@
-#include "../include/helper_functions.h"
+#include "helper_functions.h"
 
 /* 
    * @brief         Prints all of the possible options to run the program 

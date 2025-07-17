@@ -1,12 +1,11 @@
 #ifndef CSV_PARSER_H
 #define CSV_PARSER_H
 
-#include "simulation.hpp"
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
-#include "request.h"
+#include "../structs/request.h"
 
 
 #define PARSE_ERROR ((char*)-1)

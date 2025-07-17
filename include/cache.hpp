@@ -4,7 +4,7 @@
 #include "cache_layer.hpp"
 #include "multiplexer.hpp"
 #include "main_memory.hpp"
-#include "debug.h"
+#include "structs/debug.h"
 #include <systemc>
 #include <map>
 #include <vector>

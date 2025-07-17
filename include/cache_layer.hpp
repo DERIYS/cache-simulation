@@ -1,7 +1,7 @@
 #ifndef CACHE_LAYER_HPP
 #define CACHE_LAYER_HPP
 
-#include "debug.h"
+#include "structs/debug.h"
 #include <list>
 #include <systemc>
 #include <systemc.h>

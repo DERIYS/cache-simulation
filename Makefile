@@ -3,7 +3,7 @@
 # ---------------------------------------
 
 # entry point for the program and target name
-C_SRCS = src/main.c src/csv_parser.c src/numeric_parser.c util/helper_functions.c
+C_SRCS = src/main.c src/parsers/csv_parser.c src/parsers/numeric_parser.c util/helper_functions.c
 CPP_SRCS = src/simulation.cpp
 
 CFLAGS := -I$(SCPATH)/include -L$(SCPATH)/lib
