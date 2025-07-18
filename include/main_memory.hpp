@@ -20,6 +20,8 @@ SC_MODULE(MAIN_MEMORY) {
 
   std::map<uint32_t, uint8_t> memory;
 
+  bool stop = false; // If true, the memory stops waiting the latency
+
   SC_CTOR(MAIN_MEMORY);
   MAIN_MEMORY(sc_module_name name, uint32_t cacheline_size):sc_module(name),cacheline(cacheline_size){
     SC_THREAD(behaviour);
@@ -29,12 +31,15 @@ SC_MODULE(MAIN_MEMORY) {
   void behaviour() {
     while(true) {
       wait();
+      DEBUG_PRINT("MAIN_MEM: Memory behaviour thread running...\n");
       ready.write(false);
+      stop = false; // Reset stop signal at the beginning of each cycle
       if (r.read()) {
-
+        DEBUG_PRINT("MAIN_MEM: Read request received for address: %u\n", addr.read());
         doRead(w.read());
       }
       if (w.read()) {
+        DEBUG_PRINT("MAIN_MEM: Write request received for address: %u with data: %u\n", addr.read(), wdata.read());
         doWrite();
       }
     }
@@ -44,7 +49,12 @@ SC_MODULE(MAIN_MEMORY) {
     ready.write(false);
     std::vector<uint8_t> result = getCacheLine(addr.read());
 
-    for(int i = 0; i < LATENCY - 3; i++) {
+    DEBUG_PRINT("MAIN_MEM: Waiting for main memory to be ready...\n");
+    for(int i = 0; i < LATENCY; i++) {
+      if (stop) {
+        DEBUG_PRINT("MAIN_MEM: Stopping waiting the latency due to stop signal.\n");
+        break;
+      }
       wait();
     }
     for(int i=0;i<cacheline.size();i++){
@@ -59,12 +69,16 @@ SC_MODULE(MAIN_MEMORY) {
     ready.write(false);
     set(addr.read(), wdata.read());
 
-    for(int i = 0; i < LATENCY - 3; i++) {
-      printf("MAIN_MEM: Waiting for main memory to be ready on cycle %i...\n", i);
+    DEBUG_PRINT("MAIN_MEM: Waiting for main memory to be ready...\n");
+    for(int i = 0; i < LATENCY; i++) {
+      if (stop) {
+        DEBUG_PRINT("MAIN_MEM: Stopping waiting the latency due to stop signal.\n");
+        break;
+      }
       wait();
     }
+    DEBUG_PRINT("MAIN_MEM: Setting ready to true.\n");
     ready.write(true);
-    printf("MAIN_MEM: setting ready to true.\n");
     wait(SC_ZERO_TIME);
   }
 

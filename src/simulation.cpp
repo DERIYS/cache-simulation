@@ -95,11 +95,12 @@ Result run_simulation(
         r.write(!request.w);
         w.write(request.w);
         if (!request.w) additional_cycles += 2;
-        printf("Request #%li: ADDR: %u, WDATA: %u, R: %u, W: %u\n", request_index, request.addr, request.data, !request.w, request.w);\
+        DEBUG_PRINT("Request #%li: ADDR: %u, WDATA: %u, R: %u, W: %u\n", request_index, request.addr, request.data, !request.w, request.w);\
         do 
         {
+            DEBUG_PRINT("Clock: %u: \n", result.cycles);
             if (result.cycles >= cycles) {
-                std::cout<<"leaving bc cycles"<<std::endl;
+                DEBUG_PRINT("Limit of cycles reached, stopping simulation.\n");
                 return result;
             }
             result.cycles++;
