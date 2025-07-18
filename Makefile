@@ -3,7 +3,7 @@
 # ---------------------------------------
 
 # entry point for the program and target name
-C_SRCS = src/main.c src/csv_parser.c src/numeric_parser.c util/helper_functions.c
+C_SRCS = src/main.c src/parsers/csv_parser.c src/parsers/numeric_parser.c util/helper_functions.c
 CPP_SRCS = src/simulation.cpp
 
 CFLAGS := -I$(SCPATH)/include -L$(SCPATH)/lib
@@ -34,6 +34,7 @@ HEADERS := helper_functions.h simulation.hpp csv_parser.h structs.h numeric_pars
 
 # target name
 TARGET := cache
+TARGET_PROJECT := project
 
 # Path to your systemc installation
 SCPATH = $(SYSTEMC_HOME)
@@ -71,15 +72,18 @@ all: debug
 # Debug build
 debug: CFLAGS += -g
 debug: CXXFLAGS += -g
-debug: $(TARGET)
+debug: $(TARGET) $(TARGET_PROJECT)
 
 # Release build
 release: CXXFLAGS += -O2
-release: $(TARGET)
+release: $(TARGET) $(TARGET_PROJECT)
 
 # Rule to link object files to executable
 $(TARGET): $(C_OBJS) $(CPP_OBJS)
 	$(CXX) $(CXXFLAGS) $(C_OBJS) $(CPP_OBJS) $(LDFLAGS) -o $(TARGET)
+
+$(TARGET_PROJECT): $(C_OBJS) $(CPP_OBJS)
+	$(CXX) $(CXXFLAGS) $(C_OBJS) $(CPP_OBJS) $(LDFLAGS) -o $(TARGET_PROJECT)
 
 COVERAGE_FLAGS = -fprofile-arcs -ftest-coverage
 
@@ -95,6 +99,7 @@ coverage-report:
 # clean up
 clean:
 	rm -f $(TARGET)
+	rm -f $(TARGET_PROJECT)
 	rm -rf $(BIN_DIR)
 	rm -f src/*.gcda src/*.gcno coverage.info
 	rm -rf coverage-report
@@ -108,4 +113,4 @@ run-debug: $(TARGET)
 run-tests: $(TARGET)
 	python3 test/cache_tests.py
 
-.PHONY: all debug release clean
+.PHONY: all debug release clean project

@@ -5,9 +5,9 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <errno.h>
-#include "request.h"
-#include "default.h"
-#include "debug.h"
+#include "../include/structs/request.h"
+#include "../include/structs/default.h"
+#include "../include/structs/debug.h"
 
 void print_help();
 bool is_valid_filename(const char *filename);

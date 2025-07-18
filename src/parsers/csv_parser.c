@@ -1,4 +1,4 @@
-#include "../include/csv_parser.h"
+#include "../../include/parsers/csv_parser.h"
 #include <ctype.h>
 
 /*
@@ -110,7 +110,7 @@ char* split_next_line(const char* content, char* type, char* address, char* data
    * @return              The number of lines found in the content
    * 
 */
-unsigned long countRequests(char* content)
+unsigned long count_requests(char* content)
 {
     /* Use strdup so not to modify the original content */
     size_t requestsCount = 0L;
@@ -143,7 +143,7 @@ unsigned long countRequests(char* content)
    * @return              Validated integer value or parse error
    * 
 */
-uint32_t validateValue(char* someValue)
+uint32_t validate_value(char* someValue)
 {
     /* Accept both hexadecimal and decimal format */
     char* isEnd;
@@ -157,13 +157,19 @@ uint32_t validateValue(char* someValue)
     /* Not a value check */
     if (*isEnd != '\0')
     {
-        fprintf(stderr, "Failed to parse value\n");
+        fprintf(stderr, "Failed to parse value %lu\n", value);
         return VALUE_ERROR;
     }
     /* Don't accept negative values */
     if (value < 0) {
-        fprintf(stderr, "Negative data is not allowed");
+        fprintf(stderr, "Negative data is not allowed: %lu\n", value);
         return VALUE_ERROR;
+    }
+
+    /* Don't accept overflow */
+    if (value > UINT32_MAX)
+    {
+        fprintf(stderr, "Value exceeds uint32_t range: %lu\n", value);
     }
 
     return (uint32_t)value;
@@ -180,7 +186,7 @@ uint32_t validateValue(char* someValue)
    * @return              A filled Request struct if valid, otherwise a zeroed struct
    * 
 */
-Request formSingleRequest(char* type, char* address, char* data, bool* ok)
+Request form_single_request(char* type, char* address, char* data, bool* ok)
 {
     Request req = {0};   /* Initialize requests */
     *ok = false;                /*    Assume failure   */
@@ -200,7 +206,7 @@ Request formSingleRequest(char* type, char* address, char* data, bool* ok)
     }
 
     /* Validate and assing address*/
-    uint32_t req_address = validateValue(address);
+    uint32_t req_address = validate_value(address);
     if (req_address == VALUE_ERROR){
         printf("Invalid address\n");
         return req;
@@ -224,7 +230,7 @@ Request formSingleRequest(char* type, char* address, char* data, bool* ok)
         }
 
         /* Validate value and assgin to Request data*/
-        req_data = validateValue(data);
+        req_data = validate_value(data);
 
         if (req_data == VALUE_ERROR){
             printf("Invalid data\n");
@@ -249,7 +255,7 @@ Request formSingleRequest(char* type, char* address, char* data, bool* ok)
    * @return              Returns either 0 indicating normal procedure or -1 indicating failure
    * 
 */
-int formRequests(char* content, Request* requests)
+int form_requests(char* content, Request* requests)
 {
 
     /* Allocate memory for type, address and data of a single request */
@@ -274,7 +280,7 @@ int formRequests(char* content, Request* requests)
         /* Set a response for single request */
         bool ok = false;
         /* Try to form a single request */
-        Request request = formSingleRequest(type,address,data,&ok);
+        Request request = form_single_request(type,address,data,&ok);
         /* If response is not okay, free resources and return an error */
         if (!ok) {
             fprintf(stderr,"Failed to form a request\n");
