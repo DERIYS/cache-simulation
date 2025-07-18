@@ -157,13 +157,19 @@ uint32_t validate_value(char* someValue)
     /* Not a value check */
     if (*isEnd != '\0')
     {
-        fprintf(stderr, "Failed to parse value\n");
+        fprintf(stderr, "Failed to parse value %lu\n", value);
         return VALUE_ERROR;
     }
     /* Don't accept negative values */
     if (value < 0) {
-        fprintf(stderr, "Negative data is not allowed");
+        fprintf(stderr, "Negative data is not allowed: %lu\n", value);
         return VALUE_ERROR;
+    }
+
+    /* Don't accept overflow */
+    if (value > UINT32_MAX)
+    {
+        fprintf(stderr, "Value exceeds uint32_t range: %lu\n", value);
     }
 
     return (uint32_t)value;
