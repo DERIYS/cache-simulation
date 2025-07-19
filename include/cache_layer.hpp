@@ -91,39 +91,31 @@ SC_MODULE(CACHE_LAYER)
 
   void behaviour()
   {
-    while (true)
-    {
+    while (true) {
       wait();
       DEBUG_PRINT("CACHE_LAYER[%u]: Behaviour thread running... (stop=%s, idle=%s)\n", layer_index, stop ? "true" : "false", idle ? "true" : "false");
       reset_signals();
       if (!idle && (r.read() || w.read()))
       {
         DEBUG_PRINT("CACHE_LAYER[%u]: Accessing cache with address: %u, r: %u, w: %u\n", layer_index, addr.read(), r.read(), w.read());
-        if (mapping_strategy == DIRECT_MAPPED)
-        {
-          access_direct_mapped();
-        }
-        else if (mapping_strategy == FULLY_ASSOCIATIVE)
-        {
-          access_fully_associative();
-        }
-        else
-        {
+        if (mapping_strategy == DIRECT_MAPPED) access_direct_mapped();
+        else if (mapping_strategy == FULLY_ASSOCIATIVE) access_fully_associative();
+        else {
           error = true;
           if (!test_mode)
             throw std::runtime_error("Invalid mapping_strategy");
           return;
         }
-
+        
+        // Wait for the latency of this cache layer
         wait_latency();
 
-        if (stop)
-        {
+        // If stop signal is set, do not set ready signal and return
+        if (stop) {
           ready.write(false);
           DEBUG_PRINT("CACHE_LAYER[%u]: Stopped during latency wait.\n", layer_index);
         }
-        else 
-        {
+        else {
           ready.write(true);
           DEBUG_PRINT("CACHE_LAYER[%u]: Access completed, ready signal set to true.\n", layer_index);
           wait(SC_ZERO_TIME);
@@ -134,7 +126,15 @@ SC_MODULE(CACHE_LAYER)
     }
   }
 
-  // Called with every clock tick if the layer's mapping strategy is direct-mapped
+  /**
+  * @brief Handles a cache access for direct-mapped mapping strategy.
+  *
+  * This function calculates the offset, index, and tag for the given address,
+  * checks if the cache line at the computed index is valid and matches the tag (cache hit),
+  * and performs a read or write operation accordingly. On a hit, it reads the requested word
+  * or writes the provided data to the cache line. On a miss, it sets the miss signal and
+  * does not modify the cache line.
+  */
   void access_direct_mapped()
   {
     uint32_t offset, index, tag;
@@ -162,7 +162,15 @@ SC_MODULE(CACHE_LAYER)
     miss.write(true);
   }
 
-  // Called with every clock tick if the layer's mapping strategy is fully-associative
+  /**
+  * @brief Handles a cache access for fully-associative mapping strategy.
+  *
+  * This function calculates the offset and tag for the given address, checks if the tag exists
+  * in the LRU map (cache hit), and updates the LRU list to mark the accessed line as most recently used.
+  * On a hit, it performs a read or write operation on the corresponding cache line. On a miss,
+  * it sets the miss signal and does not modify the cache. The function manages LRU order and
+  * ensures correct data access for fully-associative caches.
+  */
   void access_fully_associative()
   {
     uint32_t offset, tag;
@@ -196,11 +204,11 @@ SC_MODULE(CACHE_LAYER)
     miss.write(true);
   }
 
-  // Prints the content of the cache memory for debugging purposes, in very even and readable format
+  // Prints the content of the cache memory for debugging purposes
   void print_internal_memory(int l)
   {
     // Print the linked list of cache lines in LRU order
-    std::cout << "CACHE_LAYER " << l << ": LRU List (most recently used to least recently used):\n";
+    std::cout << "CACHE_LAYER " << l << ": LRU List (most recently used to least recently used): ";
     for (const auto &index : lru_list)
     {
       std::cout << index << " ";

@@ -1,5 +1,6 @@
 #include "../include/simulation.hpp"
 #include "../include/cache.hpp"
+#include "../test/cache_layer_unit_tests.cpp"
 #include <iostream>
 
 /*
@@ -71,7 +72,7 @@ Result run_simulation(
     result.hits = 0;
     result.misses = 0;
     Request request;
-    uint32_t additional_cycles = 0;
+
     sc_trace_file *trace = NULL;
 
     if (tracefile != NULL)
@@ -87,37 +88,45 @@ Result run_simulation(
         sc_trace(trace, miss, "miss");
     }
 
-    for (size_t request_index = 0; request_index < numRequests; request_index++)
-    {
+    // run_cache_layer_tests();
+
+    for (size_t request_index = 0; request_index < numRequests; request_index++) {
         request = requests[request_index];
+
+        DEBUG_PRINT("SIMULATION: Request %zu: type=%s, addr = 0x%08X, data=0x%08X\n", request_index + 1,
+            request.w ? "W" : "R",
+            request.addr,
+            request.data);
+
         addr.write(request.addr);
         wdata.write(request.data);
         r.write(!request.w);
         w.write(request.w);
-        if (!request.w) additional_cycles += 2;
-        DEBUG_PRINT("Request #%li: ADDR: %u, WDATA: %u, R: %u, W: %u\n", request_index, request.addr, request.data, !request.w, request.w);\
-        do 
-        {
-            DEBUG_PRINT("Clock: %u: \n", result.cycles);
+
+        do {
+            DEBUG_PRINT("Clock %u: \n", result.cycles);
+            
             if (result.cycles >= cycles) {
                 DEBUG_PRINT("Limit of cycles reached, stopping simulation.\n");
                 return result;
             }
             result.cycles++;
+
             sc_start(10, SC_NS);
+
         } while (!ready.read());
-        printf("Read data: %u\n", cache.rdata.read());
-        cache.print_caches();
-        if (miss.read())
-            result.misses++;
-        else
-            result.hits++;
-        r.write(false); w.write(false);
+
+        DEBUG_PRINT("SIMULATION: Read data: %u\n", cache.rdata.read());
+
+        if (debug) cache.print_caches();
+
+        if (miss.read()) result.misses++;
+        else result.hits++;
     }
 
     if (tracefile != NULL) {
         sc_close_vcd_trace_file(trace);
     }
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         result.cycles -= additional_cycles;
+
     return result;
 }

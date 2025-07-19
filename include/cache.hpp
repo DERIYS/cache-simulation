@@ -11,7 +11,7 @@
 #include <memory>
 
 // Define the zero time for cache operations, needed for waiting in cache operations
-#define CACHE_ZERO_TIME 0.1, SC_NS
+#define CACHE_ZERO_TIME 1, SC_NS
 
 using namespace sc_core;
 
@@ -79,8 +79,7 @@ SC_MODULE(CACHE)
         mem_cacheline_sig(cacheline_size),
         mem_cacheline(cacheline_size)
   {
-    switch (num_cache_levels)
-    {
+    switch (num_cache_levels) {
     case 3:
       L[2] = (std::make_unique<CACHE_LAYER>("L3", latency_cache_L3, num_lines_L3, cacheline_size, mapping_strategy, 3));
     case 2:
@@ -156,6 +155,12 @@ SC_MODULE(CACHE)
     sensitive << clk.pos();
   }
 
+  /* * @brief Prints the internal memory of each cache level.
+   * This function iterates through each cache level and prints its internal memory contents.
+   * Used for debugging and verifying the state of the cache hierarchy.
+   *
+   * @note This function is intended for debugging purposes and may not be suitable for production use.
+  */
   void print_caches()
   {
     for (int i = 0; i < num_cache_levels; i++)
@@ -199,7 +204,8 @@ SC_MODULE(CACHE)
       if (w.read()) doWrite();
 
       ready.write(true);
-      miss.write(cache_miss_mux.out[0].read());
+      miss.write(cache_miss_out.read());
+      if (!miss.read()) rdata.write(cache_data_out.read());
     }
   }
 
@@ -207,9 +213,16 @@ SC_MODULE(CACHE)
     wait(CACHE_ZERO_TIME);
   }
 
-  // waiting till each cache level from low to high will be ready
-  // and check if there is a hit/miss. if hit - wait cache latency and return rdata
-  // miss - set input signals for main_memory, wait till ready, write readed cacheline in each cache level and return it
+  /**
+   * @brief Handles a read request in the cache hierarchy.
+   *
+   * This function initiates a read operation by signaling the main memory and propagating the request
+   * through all cache levels. It waits for each cache level to become ready and checks for a cache hit.
+   * If a hit occurs in any cache level, it updates the multiplexer select signals to route the hit data
+   * to the output, sets stop/idle flags for other cache levels and main memory, and returns the data.
+   * If all cache levels miss, it waits for the main memory to become ready, retrieves the cacheline from
+   * memory, writes it to all cache levels, and outputs the requested word from the newly filled cacheline.
+   */
   void doRead()
   {
     bool hit = false;
@@ -225,24 +238,23 @@ SC_MODULE(CACHE)
       wait_for_cache_level_ready(i);
 
       // if data was found in cache level, set select bits for multiplexers
-      if (!L[i]->miss.read())
+      if (!hit && !L[i]->miss.read())
       {
         DEBUG_PRINT("MAIN: Hit in L[%d]: %s\n", i + 1, !L[i]->miss.read() ? "true" : "false");
-        DEBUG_PRINT("MAIN: Read data in cache level %d: %u\n", i + 1, L[i]->data.read());
+        DEBUG_PRINT("MAIN: Read data in CACHE_LAYER[%d]: %u\n", i + 1, L[i]->data.read());
 
         hit = true;
 
-        rdata.write(L[i]->data.read()); // TODO: fix
-        miss_mux_select.write(i); // TODO: fix
+        miss_mux_select.write(i);
         ready_mux_select.write(i);
         data_mux_select.write(i);
-        wait(SC_ZERO_TIME);
+        wait_zero_cachetime();
 
         for (uint32_t j = 0; j < num_cache_levels; j++)
         {
-          DEBUG_PRINT("MAIN: Setting stop signal for cache level %d to %s\n", j + 1, j == i ? "false" : "true");
+          DEBUG_PRINT("MAIN: Setting stop signal for CACHE_LAYER[%d] to %s\n", j + 1, j == i ? "false" : "true");
           if (j != i) L[j]->stop = true; // stop waiting the latency in other cache levels
-          if (j == i) L[j]->idle = true; // reset stop signal for the cache level, where data was found
+          else L[j]->idle = true; // set cache level with hit to idle in the next clock
         }
         main_memory.stop = true; // stop waiting the latency in main memory
         
@@ -267,6 +279,7 @@ SC_MODULE(CACHE)
     }
   }
 
+  // Helper function to get cacheline from main memory for read/write operations
   std::vector<uint8_t> get_cacheline_from_memory() {
     std::vector<uint8_t> cacheline;
     for (int i = 0; i < cacheline_size; i++)
@@ -300,6 +313,15 @@ SC_MODULE(CACHE)
     }
   }
 
+  /**
+ * @brief Handles a write request in the cache hierarchy.
+ *
+ * This function initiates a write operation by signaling the main memory and propagating the request
+ * through all cache levels. It waits for each cache level to become ready and checks for cache hits.
+ * For each cache level that misses, it writes the updated cacheline from main memory into that level.
+ * The function ensures that the written data is reflected in both the cache hierarchy and main memory,
+ * and updates multiplexer select signals to route the correct outputs after the operation.
+ */
   void doWrite()
   {
     bool hit[num_cache_levels]; // hit[i] = true if cache level i was hit
@@ -320,6 +342,7 @@ SC_MODULE(CACHE)
         miss_mux_select.write(i); // TODO: fix
         ready_mux_select.write(i);
         data_mux_select.write(i);
+        wait(SC_ZERO_TIME);
       }
       
       hit[i] = !L[i]->miss.read();
