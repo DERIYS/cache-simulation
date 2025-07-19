@@ -7,8 +7,10 @@ C_SRCS = src/main.c src/parsers/csv_parser.c src/parsers/numeric_parser.c util/h
 CPP_SRCS = src/simulation.cpp
 
 # Test source files
-TEST_CPP_SRCS = test/test_cache.cpp test/testMainCache.cpp test/cache_layer_unit_tests.cpp
+TEST_CPP_SRCS = test/testMainCache.cpp test/cache_layer_unit_tests.cpp
 
+# Path to your systemc installation
+SCPATH = $(SYSTEMC_HOME)
 
 CFLAGS := -I$(SCPATH)/include -L$(SCPATH)/lib
 
@@ -49,9 +51,6 @@ TARGET := project
 # cache tests target
 CACHE_TEST_TARGET := cache_test
 
-# Path to your systemc installation
-SCPATH = $(SYSTEMC_HOME)
-
 # Additional flags for the compiler
 CXXFLAGS := -std=c++14  -I$(SCPATH)/include -L$(SCPATH)/lib -lsystemc -lm
 
@@ -89,7 +88,7 @@ debug: $(TARGET)
 
 # Release build
 release: CXXFLAGS += -O2
-release: $(TARGET)
+release: $(TARGET) 
 
 # Rule to link object files to executable
 $(TARGET): $(C_OBJS) $(CPP_OBJS)
@@ -126,11 +125,11 @@ run-debug: $(TARGET)
 	./project -d --cycles 1000 debug.csv
 
 run-cpp-tests: $(CACHE_TEST_TARGET)
-	./cache_test
+	./bin/cache_test
 
 run-python-tests:
 	python3 test/cache_tests.py
 
 run-tests: run-cpp-tests run-python-tests
 
-.PHONY: all debug release clean project
+.PHONY: all debug release clean coverage coverage-report run run-debug run-cpp-tests run-python-tests run-tests

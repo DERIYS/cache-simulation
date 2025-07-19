@@ -100,10 +100,10 @@ void cacheWriteHit(CACHE &cache, sc_signal<uint32_t> &addr,sc_signal<uint32_t> &
         assert_bool("cacheWriteHit miss",false  ,miss.read());
         assert_bool("cacheWriteHit ready",true,ready.read());
 
-        assert_equal_one_line("cacheReadAfterWriteHit L1[0]",0xd4,cache.getCacheLineContent(1,0,0));
-        assert_equal_one_line("cacheReadAfterWriteHit L1[1]",0xd3,cache.getCacheLineContent(1,0,1));
-        assert_equal_one_line("cacheReadAfterWriteHit L1[2]",0xd2,cache.getCacheLineContent(1,0,2));
-        assert_equal("cacheReadAfterWriteHit L1[3]",0xd1,cache.getCacheLineContent(1,0,3));
+        assert_equal_one_line("cacheReadAfterWriteHit L1[0]",0xd4,cache.get_cacheline_content(1,0,0));
+        assert_equal_one_line("cacheReadAfterWriteHit L1[1]",0xd3,cache.get_cacheline_content(1,0,1));
+        assert_equal_one_line("cacheReadAfterWriteHit L1[2]",0xd2,cache.get_cacheline_content(1,0,2));
+        assert_equal("cacheReadAfterWriteHit L1[3]",0xd1,cache.get_cacheline_content(1,0,3));
 }
 
 void cacheWriteMiss(CACHE &cache, sc_signal<uint32_t> &addr,sc_signal<uint32_t> &wdata,  sc_signal<bool> &r, 
@@ -121,7 +121,7 @@ void cacheWriteMiss(CACHE &cache, sc_signal<uint32_t> &addr,sc_signal<uint32_t> 
 
 void print_caches(int number,CACHE& cache){
     for(int i=0;i<number;i++){
-        cache.L[i]->print(i+1);
+        cache.L[i]->print_internal_memory(i+1);
     }std::cout<<"\n";
 }
 
