@@ -3,7 +3,7 @@ Teilnehmer Anteile:
 
 - Lev Franko: Implementierung des Cache-Level-Moduls (cache_layer.hpp), Umsetzung der Adress-Suchalgorithmen im Cache sowie der Ersetzungsstrategie (Replacement Policy) LRU im vollassoziativen Cache, Synchronisation mit cache.hpp, Testen.
 
-- Roman Kupar: Implementierung des Parsens der CSV-Dateien, Berücksichtigung von Sonderfällen bei den Eingabedaten, Umsetzung des Rahmenprogramms main.c, Verarbeitung von Konsolenargumenten, automatisiertes Testen des Programms.
+- Roman Kupar: Implementierung des Parsens der CSV-Dateien, Berücksichtigung von Sonderfällen bei den Eingabedaten,Umsetzung des Rahmenprogramms main.c, Verarbeitung von Konsolenargumenten, automatisiertes Testen des Programms,Unterstützung beim Simulation, Impelmentierung von GUI.
 
 Ergebnisse der Literaturrecherche:
 Erklaerung der Begriffe:
@@ -54,7 +54,8 @@ Das Projekt umfasst die Entwicklung eines Cache-Simulators in SystemC, der die F
 
 - **Lev Franko**: Implementierung des Cache-Level-Moduls (**'cache_layer.hpp'**), Umsetzung der Adress-Suchalgorithmen im Cache sowie der Ersetzungsstrategie (Replacement Policy) LRU im vollassoziativen Cache, Synchronisation mit cache.hpp, Testen.
 
-- **Roman Kupar**: Implementierung des Parsens der CSV-Dateien, Berücksichtigung von Sonderfällen bei den Eingabedaten, Umsetzung des Rahmenprogramms main.c, Verarbeitung von Konsolenargumenten, automatisiertes Testen des Programms.
+- **Roman Kupar**: Implementierung des Parsens der CSV-Dateien, Berücksichtigung von Sonderfällen bei den Eingabedaten, Umsetzung des Rahmenprogramms main.c, Verarbeitung von Konsolenargumenten, automatisiertes Testen des Programms. 
+Unterstützung beim Simulation, Impelmentierung von GUI.
 
 ## Ergebnisse der Literaturrecherche
 

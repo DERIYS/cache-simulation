@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "../structs/request.h"
+#include "../structs/debug.h"
 
 
 #define PARSE_ERROR ((char*)-1)

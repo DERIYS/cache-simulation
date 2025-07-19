@@ -4,7 +4,7 @@ import os
 
 class CacheProgramTests(unittest.TestCase):
     def setUp(self):
-        self.binary = "./cache"
+        self.binary = "./project"
 
         self.valid_file = "test/inputs/valid_data.csv"
         self.invalid_files = [
@@ -58,7 +58,6 @@ class CacheProgramTests(unittest.TestCase):
 
     def test_set_cacheline_and_levels(self):
         result = self.run_cache([
-            "--debug",
             "-C", "64",
             "-L", "128",
             "-M", "256",

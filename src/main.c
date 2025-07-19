@@ -64,7 +64,7 @@ int main(int argc, char** argv)
             case 'c':
 
                 /* Passes argument for verification, cycles as uint32, where the argument will be stored, and string indicating error, if needed */
-                if (!parse_unsigned_int(optarg, IS_32BIT, &cycles, "cycles value")) {
+                if (!parse_unsigned_int32(optarg, &cycles, "cycles value")) {
                     return EX_DATAERR;
                 }
 
@@ -87,13 +87,13 @@ int main(int argc, char** argv)
 
                 return EXIT_SUCCESS;
 
-            /* ADVANCED OPTIONS */
+            /* Advanced options */
 
             /* Parse and validate cache line size, and pass it to simulation paramets afterwards */
             case 'C':
 
                 /* Passes argument for verification, cachelineSize as uint32, where the argument will be stored, and string indicating error, if needed */
-                if (!parse_unsigned_int(optarg, IS_32BIT, &cachelineSize, "cache line size")) {
+                if (!parse_unsigned_int32(optarg, &cachelineSize, "cache line size")) {
                     return EX_DATAERR;
                 }
 
@@ -104,7 +104,7 @@ int main(int argc, char** argv)
             case 'L':
                 
                 /* Passes argument for verification, numLinesL1 as uint32, where the argument will be stored, and string indicating error, if needed */
-                if (!parse_unsigned_int(optarg, IS_32BIT, &numLinesL1, "cache L1 line value")) {
+                if (!parse_unsigned_int32(optarg, &numLinesL1, "cache L1 line value")) {
                     return EX_DATAERR;
                 }
           
@@ -115,7 +115,7 @@ int main(int argc, char** argv)
             case 'M':
                 
                 /* Passes argument for verification, numLinesL2 as uint32, where the argument will be stored, and string indicating error, if needed */
-                if (!parse_unsigned_int(optarg, IS_32BIT , &numLinesL2, "cache L2 line value")) {
+                if (!parse_unsigned_int32(optarg, &numLinesL2, "cache L2 line value")) {
                     return EX_DATAERR;
                 }
 
@@ -126,7 +126,7 @@ int main(int argc, char** argv)
             case 'N':
                 
                 /* Passes argument for verification, numLinesL3 as uint32, where the argument will be stored, and string indicating error, if needed */
-                if (!parse_unsigned_int(optarg, IS_32BIT ,&numLinesL3, "cache L3 line value")) {
+                if (!parse_unsigned_int32(optarg,&numLinesL3, "cache L3 line value")) {
                     return EX_DATAERR;
                 }
 
@@ -137,7 +137,7 @@ int main(int argc, char** argv)
             case 'l':
                 
                 /* Passes argument for verification, latencyCacheL1 as uint32, where the argument will be stored, and string indicating error, if needed */
-                if (!parse_unsigned_int(optarg, IS_32BIT, &latencyCacheL1, "cache L1 latency value")) {
+                if (!parse_unsigned_int32(optarg, &latencyCacheL1, "cache L1 latency value")) {
                     return EX_DATAERR;
                 }
 
@@ -148,7 +148,7 @@ int main(int argc, char** argv)
             case 'm':
                 
                 /* Passes argument for verification, latencyCacheL2 as uint32, where the argument will be stored, and string indicating error, if needed */
-                if (!parse_unsigned_int(optarg, IS_32BIT,  &latencyCacheL2, "cache L2 latency value")) {
+                if (!parse_unsigned_int32(optarg,  &latencyCacheL2, "cache L2 latency value")) {
                     return EX_DATAERR;
                 }
 
@@ -159,7 +159,7 @@ int main(int argc, char** argv)
             case 'n':
 
                 /* Passes argument for verification, latencyCache3 as uint32, where the argument will be stored, and string indicating error, if needed */
-                if (!parse_unsigned_int(optarg, IS_32BIT, &latencyCacheL3, "cache L3 latency value")) {
+                if (!parse_unsigned_int32(optarg, &latencyCacheL3, "cache L3 latency value")) {
                     return EX_DATAERR;
                 }
 
@@ -170,7 +170,7 @@ int main(int argc, char** argv)
             case 'e':
 
                 /* Passes argument for verification, numCacheLevels as uint8, where the argument will be stored, and string indicating error, if needed */
-                if (!parse_unsigned_int(optarg, &numCacheLevels, IS_8BIT , "number of cache levels")) {
+                if (!parse_unsigned_int8(optarg, &numCacheLevels, "number of cache levels")) {
                     return EX_DATAERR;
                 }
 
@@ -186,7 +186,7 @@ int main(int argc, char** argv)
             case 'S':
                 
                 /* Passes argument for verification, mappingStrategy as uint8, where the argument will be stored, and string indicating error, if needed */
-                if (!parse_unsigned_int(optarg, &mappingStrategy, IS_8BIT ,"mapping strategy")) {
+                if (!parse_unsigned_int8(optarg, &mappingStrategy,"mapping strategy")) {
                     return EX_DATAERR;
                 }
 
@@ -273,12 +273,12 @@ int main(int argc, char** argv)
               requests
     );
 
-    printf("cycles: %u, hits: %u, misses: %u\n", result.cycles, result.hits, result.misses);
+    printf("\n\n\t\t======SIMULATION RESULTS======\n"); 
+    printf("\t\tCycles: %u\n \t\tHits: %u\n \t\tMisses: %u\n\n", result.cycles, result.hits, result.misses);
 
     /* Normal cleanup */
     free(requests);
     free(content);
-
 
     /* Programm ran successfuly*/
     return EXIT_SUCCESS;

@@ -38,7 +38,7 @@ void Application::printMenu()
 	}
 	else // Configure 
 	{
-		std::cout << "\t\t\t" << (currentCOption == ConfigOption::Input ? cursor : " ") << inputConf << "input.csv" << "\n";
+		std::cout << "\t\t\t" << (currentCOption == ConfigOption::Input ? cursor : " ") << inputConf << "requests.csv" << "\n";
 		std::cout << "\t\t\t" << (currentCOption == ConfigOption::Tracefile ? cursor : " ") << tracefileConf << (tracefile ? "tracefile.tf" : " ") << "\n";
 		std::cout << "\t\t\t" << (currentCOption == ConfigOption::Cycles ? cursor : " ") << cyclesConf << cycles << "\n";
 		std::cout << "\t\t\t" << (currentCOption == ConfigOption::NumberCacheLevels ? cursor : " ") << numCacheLevelsConf << static_cast<uint32_t>(numCacheLevels) << "\n";
@@ -138,7 +138,7 @@ void Application::runCacheSimulation()
 		char* mappingStrategy_str = uint8_to_string(mappingStrategy);
 
         std::vector<char*> args;
-		args.push_back((char*)"../../cache");
+		args.push_back((char*)"../../project");
 
 		if (debugMode)
 		    args.push_back((char*)"-d");
@@ -178,7 +178,7 @@ void Application::runCacheSimulation()
 		args.push_back((char*)"-S");
 		args.push_back(mappingStrategy_str);
 
-		args.push_back((char*)"../../input.csv");
+		args.push_back((char*)"../../requests.csv");
 
 		args.push_back(NULL);
 
@@ -231,11 +231,11 @@ void Application::readOptionInput(OptionEnum& currentOption) {
                     currentIndex = (currentIndex + 1) % count;
                     system("clear");
                     break;
-				case 'C': // Right → increase
+				case 'C': // Right - increase
         			if constexpr (std::is_same<OptionEnum, ConfigOption>::value)
             			incrementConfigOptionValue(currentOption);
         			break;
-    			case 'D': // Left ← decrease
+    			case 'D': // Left - decrease
         			if constexpr (std::is_same<OptionEnum, ConfigOption>::value)
             			decrementConfigOptionValue(currentOption);
         			break;

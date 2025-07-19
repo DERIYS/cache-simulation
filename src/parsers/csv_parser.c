@@ -1,6 +1,7 @@
 #include "../../include/parsers/csv_parser.h"
 #include <ctype.h>
 
+
 /*
    * @brief               Splits the content by line and returns pointer to new line in content
    *
@@ -170,6 +171,7 @@ uint32_t validate_value(char* someValue)
     if (value > UINT32_MAX)
     {
         fprintf(stderr, "Value exceeds uint32_t range: %lu\n", value);
+        return VALUE_ERROR;
     }
 
     return (uint32_t)value;
@@ -189,7 +191,7 @@ uint32_t validate_value(char* someValue)
 Request form_single_request(char* type, char* address, char* data, bool* ok)
 {
     Request req = {0};   /* Initialize requests */
-    *ok = false;                /*    Assume failure   */
+    *ok = false;        /*    Assume failure   */
     bool isR = false;
 
     /* Determine request type */
@@ -216,12 +218,43 @@ Request form_single_request(char* type, char* address, char* data, bool* ok)
 
     /* Handle data based on request type */
     uint32_t req_data;
-    if (isR && *data != '\0'){
+
+    /* Check data by R request. If debug mode is off, then R request should not include data */
+    if (isR && *data != '\0' && !debug){
         printf("Invalid data --- no data expected by read\n");
         return req;
+
+    /* If debug mode is enabled, then CSV also includes expected values, so we write them 
+        Following condition for R is triggered only in debug mode */  
+    } else if (isR && debug) {
+
+        /* Attention */
+        /* In this case "data" variable name could be misleading. 
+            We refer to expected value not data  */
+
+        /* if debug is enabled, then there should be third field by R request */
+        if (*data == '\0'){
+            printf("Missing expected value for read request in debugger mode\n");
+            return req;
+        }
+
+        /* Validate value and assign to Request data*/
+        req_data = validate_value(data);
+
+        if (req_data == VALUE_ERROR){
+            printf("Invalid expected value\n");
+            return req;
+        }
+        else {
+            req.data = req_data;
+        }
+
+
     } else if (isR) {
-        /* Data is empty by R, which is correct */
-    } else {
+        /* Data is empty by read request without debugger mode, which is correct.
+            Do nothing...  */
+    } 
+    else {
 
         /* Data empty for W request */
         if (*data == '\0'){
@@ -229,7 +262,7 @@ Request form_single_request(char* type, char* address, char* data, bool* ok)
             return req;
         }
 
-        /* Validate value and assgin to Request data*/
+        /* Validate value and assign to Request data*/
         req_data = validate_value(data);
 
         if (req_data == VALUE_ERROR){
