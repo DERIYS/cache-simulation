@@ -31,11 +31,10 @@ SC_MODULE(CACHE)
   sc_out<bool> ready, miss;
 
   sc_out<uint32_t> mem_addr, mem_wdata;
-  sc_out<bool> mem_r, mem_w;
+  sc_out<bool> mem_r, mem_w, mem_stop;
 
   // modules
   std::vector<std::unique_ptr<CACHE_LAYER>> L;
-  MAIN_MEMORY main_memory;
   MULTIPLEXER_BOOLEAN cache_miss_mux, cache_ready, r_mux, w_mux;
   MULTIPLEXER_I32 cache_data, addr_mux, wdata_mux;
 
@@ -75,7 +74,6 @@ SC_MODULE(CACHE)
         w_mux("wMul", 1, num_cache_levels),
         addr_mux("addrMul", 1, num_cache_levels),
         wdata_mux("wdataMul", 1, num_cache_levels),
-        main_memory("main_memory", cacheline_size),
         mem_cacheline_sig(cacheline_size),
         mem_cacheline(cacheline_size)
   {
@@ -133,24 +131,6 @@ SC_MODULE(CACHE)
     cache_ready.out[0](cache_ready_out);
     cache_ready.select(ready_mux_select);
 
-    // connect inputs/outputs for main_memory module
-    main_memory.clk(clk);
-    main_memory.addr(mem_addr_sig);
-    mem_addr(mem_addr_sig);
-    main_memory.wdata(mem_wdata_sig);
-    mem_wdata(mem_wdata_sig);
-    main_memory.r(mem_r_sig);
-    mem_r(mem_r_sig);
-    main_memory.w(mem_w_sig);
-    mem_w(mem_w_sig);
-    for (int i = 0; i < cacheline_size; i++)
-    {
-      main_memory.cacheline[i](mem_cacheline_sig[i]);
-      mem_cacheline[i](mem_cacheline_sig[i]);
-    }
-    main_memory.ready(mem_ready_sig);
-    mem_ready(mem_ready_sig);
-
     SC_THREAD(behaviour);
     sensitive << clk.pos();
   }
@@ -187,6 +167,7 @@ SC_MODULE(CACHE)
     ready.write(false);
     miss.write(false);
     rdata.write(0);
+    mem_stop.write(false);
   }
 
   void behaviour()
@@ -206,6 +187,7 @@ SC_MODULE(CACHE)
       ready.write(true);
       miss.write(cache_miss_out.read());
       if (!miss.read()) rdata.write(cache_data_out.read());
+      DEBUG_PRINT("MAIN: Output signals set: ready=%s, miss=%s, rdata=%u\n", ready.read() ? "true" : "false", miss.read() ? "true" : "false", rdata.read());
     }
   }
 
@@ -227,7 +209,7 @@ SC_MODULE(CACHE)
   {
     bool hit = false;
 
-    mem_r.write(true); // setting read signal to true, so that MM will start reading data
+    // mem_r.write(true); // setting read signal to true, so that MM will start reading data
     wait(); // wait for the next clock cycle so that memory and cache levels start processing the request
     mem_r.write(false); // setting read signal to false, so that MM will not read data after this request if not needed
     wait(SC_ZERO_TIME);
@@ -244,7 +226,7 @@ SC_MODULE(CACHE)
         DEBUG_PRINT("MAIN: Read data in CACHE_LAYER[%d]: %u\n", i + 1, L[i]->data.read());
 
         hit = true;
-
+        
         miss_mux_select.write(i);
         ready_mux_select.write(i);
         data_mux_select.write(i);
@@ -256,7 +238,7 @@ SC_MODULE(CACHE)
           if (j != i) L[j]->stop = true; // stop waiting the latency in other cache levels
           else L[j]->idle = true; // set cache level with hit to idle in the next clock
         }
-        main_memory.stop = true; // stop waiting the latency in main memory
+        mem_stop.write(true); // stop waiting the latency in main memory
         
         break;
       }
@@ -327,7 +309,7 @@ SC_MODULE(CACHE)
     bool hit[num_cache_levels]; // hit[i] = true if cache level i was hit
     uint8_t indexL[num_cache_levels];
 
-    w_mux_in.write(true); // setting write signal to true, so that MM will start writing data
+    // w_mux_in.write(true); // setting write signal to true, so that MM will start writing data
     wait(); // wait for the next clock cycle so that memory and cache levels start processing the request
     mem_w.write(false); // setting write signal to false, so that MM will not write data after this request if not needed
     w_mux_in.write(false);
@@ -342,7 +324,7 @@ SC_MODULE(CACHE)
         miss_mux_select.write(i); // TODO: fix
         ready_mux_select.write(i);
         data_mux_select.write(i);
-        wait(SC_ZERO_TIME);
+        wait_zero_cachetime();
       }
       
       hit[i] = !L[i]->miss.read();
@@ -363,17 +345,13 @@ SC_MODULE(CACHE)
     DEBUG_PRINT("MAIN: Data written to cache levels.\n");
   }
 
-  // returns byte in cache-level: level, cache line: line_index, at position: index
-  uint8_t get_cacheline_content(uint32_t level, uint32_t line_index, uint32_t index)
+  // Returns byte in cache-level: level, cache line: line_index, at position: index
+  // Assumes that level is in range [0;2], where 0 represents L1, 1 represents L2, and 2 represents L3.
+  uint8_t getCacheLineContent(uint32_t level, uint32_t line_index, uint32_t index)
   {
-    if (level <= 0 || level > num_cache_levels)
+    if (level < 0 || level >= num_cache_levels)
       throw std::runtime_error("Number of cache levels must be in range [1;3] in method get_cacheline_content.\n");
-    return L[level - 1]->get_cacheline_content(line_index, index);
-  }
-
-  void set_memory(uint32_t address, uint32_t value)
-  {
-    main_memory.set(address, value);
+    return L[level]->get_cacheline_content(line_index, index);
   }
 };
 

@@ -1,8 +1,8 @@
 def int_to_hex(value):
     return f"0x{value:08x}"
 
-N = 3
-
+N = 30
+debug = int(input("Enter 1 for debug mode, 0 for normal mode: "))
 base_A = 0x00000000
 base_B = 0x00000100
 base_C = 0x00000200
@@ -11,22 +11,22 @@ def get_address(base, i, j, N):
     return base + (i * N + j) * 4
 
 A = [
-    [1, 2, 3],
-    [4, 5, 6],
-    [7, 8, 9]
+    [N * i + j + 1 for j in range(N)] for i in range(N)
 ]
 
 B = [
-    [1, 0, 0],
-    [0, 1, 0],
-    [0, 0, 1]
+    [1 if i == j else 0 for j in range(N)] for i in range(N)
 ]
 
-C = [
-    [0, 0, 0],
-    [0, 0, 0],
-    [0, 0, 0]
-]
+print("Matrix A:")
+for row in A:
+    print(row)
+
+print("\nMatrix B:")
+for row in B:
+    print(row)
+
+C = [[0 for _ in range(N)] for _ in range(N)]
 
 csv_entries = []
 
@@ -34,7 +34,8 @@ def make_write_request(addr, wdata):
     csv_entries.append(f"W,{int_to_hex(addr)},{int_to_hex(wdata)}")
 
 def make_read_request(addr, expected):
-    csv_entries.append(f"R,{int_to_hex(addr)},{int_to_hex(expected)}")
+    if debug == 0: csv_entries.append(f"R,{int_to_hex(addr)},")
+    else: csv_entries.append(f"R,{int_to_hex(addr)},{int_to_hex(expected)}")
 
 
 # Initialize memory with A, B, C

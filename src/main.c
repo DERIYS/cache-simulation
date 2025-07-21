@@ -299,33 +299,6 @@ int main(int argc, char** argv)
               requests
     );
 
-    printf("\n\t\t======SIMULATION PARAMETRS======\n\
-            \tCycles: %u\n\
-            \tTracefile: %s\n\
-            \tNumber of cache levels: %u\n\
-            \tCacheline size: %u\n\
-            \tNumber of L1 lines: %u\n\
-            \tNumber of L2 lines: %u\n\
-            \tNumber of L3 lines: %u\n\
-            \tLatency of L1 cache: %u\n\
-            \tLatency of L2 cache: %u\n\
-            \tLatency of L3 cache: %u\n\
-            \tMapping strategy: %s\n",
-            cycles,
-            traceFileName ? traceFileName : "none",
-            numCacheLevels,
-            cachelineSize,
-            numLinesL1,
-            numLinesL2,
-            numLinesL3,
-            latencyCacheL1,
-            latencyCacheL2,
-            latencyCacheL3,
-            mappingStrategy == 1 ? "Fully associative" : "Direct mapped"); 
-
-    printf("\n\n\t\t======SIMULATION RESULTS======\n\t\tCycles: %u\n\t\tHits: %u\n\t\tMisses: %u\n\n",
-             result.cycles, result.hits, result.misses);
-
     /* Normal cleanup */
     free(requests);
     free(content);

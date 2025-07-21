@@ -430,7 +430,7 @@ void test_write_cacheline_invalid_strategy(CACHE_LAYER &cache_layer)
     assert_bool("WriteDataInvalidStrategy", true, cache_layer.error);
 }
 
-void run_cache_layer_tests()
+void sc_main()
 {
     sc_clock clk("clk1", 10, SC_NS);
     sc_signal<uint32_t> addr, wdata;

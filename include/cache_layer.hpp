@@ -216,9 +216,14 @@ SC_MODULE(CACHE_LAYER)
     std::cout << "\n";
     std::cout << "CACHE_LAYER " << l << ": Cache Memory Content:\n";
     std::cout << "Index\tTag\tValid\tData\n";
+    uint32_t invalid_cachelines = 0;
     for (size_t i = 0; i < cache_memory.size(); ++i)
     {
       const auto &line = cache_memory[i];
+      if (!line.valid) {
+        invalid_cachelines++;
+        continue; // Skip invalid lines
+      }
       std::cout << i << "\t" << line.tag << "\t" << (line.valid ? "true" : "false") << "\t";
       for (const auto &byte : line.data)
       {
@@ -226,6 +231,10 @@ SC_MODULE(CACHE_LAYER)
       }
       std::cout << std::dec << "\n";
     }
+    if (invalid_cachelines > 0)
+      std::cout << "..." << "and " << invalid_cachelines << " invalid (empty) cachelines." << "\n";
+    else
+      std::cout << "CACHE_LAYER " << l << ": All cache lines are valid.\n";
   }
 
   // Helper function to set offset, (index), and tag values
