@@ -13,7 +13,7 @@
 
 // Helper function to compare integers
 
-void assert_equal(const std::string &test_name, uint32_t expected, uint32_t actual)
+void assert_equal_layer(const std::string &test_name, uint32_t expected, uint32_t actual)
 {
     if (expected == actual)
     {
@@ -27,7 +27,7 @@ void assert_equal(const std::string &test_name, uint32_t expected, uint32_t actu
 }
 
 // Helper function to compare booleans
-void assert_bool(const std::string &test_name, const bool expected, const bool actual)
+void assert_bool_layer(const std::string &test_name, const bool expected, const bool actual)
 {
     if (expected == actual)
     {
@@ -41,7 +41,7 @@ void assert_bool(const std::string &test_name, const bool expected, const bool a
 }
 
 // Helper function for exception handling (doesn't work since systemc modules have their own threads on which they throw the exceptions)
-void assert_throws(const std::string &test_name, const std::function<void()> &func)
+void assert_throws_layer(const std::string &test_name, const std::function<void()> &func)
 {
     try
     {
@@ -100,9 +100,9 @@ void test_direct_mapped_read_hit(CACHE_LAYER &cache_layer, sc_signal<uint32_t> &
     sc_start(10, SC_NS); // One clock cycle
     r.write(false);
 
-    assert_bool("DirectMappedHit_Miss", false, miss.read());
-    assert_equal("DirectMappedHit_Data", 0x12345678, data.read());
-    assert_bool("DirectMappedHit_Ready", true, ready.read());
+    assert_bool_layer("DirectMappedHit_Miss", false, miss.read());
+    assert_equal_layer("DirectMappedHit_Data", 0x12345678, data.read());
+    assert_bool_layer("DirectMappedHit_Ready", true, ready.read());
 }
 
 void test_direct_mapped_read_miss(CACHE_LAYER &cache_layer, sc_signal<uint32_t> &addr, sc_signal<bool> &r, sc_signal<bool> &w,
@@ -120,8 +120,8 @@ void test_direct_mapped_read_miss(CACHE_LAYER &cache_layer, sc_signal<uint32_t> 
     sc_start(10, SC_NS);
     r.write(false);
 
-    assert_bool("DirectMappedMiss_Miss", true, miss.read());
-    assert_bool("DirectMappedMiss_Ready", true, ready.read());
+    assert_bool_layer("DirectMappedMiss_Miss", true, miss.read());
+    assert_bool_layer("DirectMappedMiss_Ready", true, ready.read());
 }
 
 void test_direct_mapped_invalid_offset(CACHE_LAYER &cache_layer, sc_signal<uint32_t> &addr, sc_signal<bool> &r, sc_signal<bool> &w)
@@ -136,7 +136,7 @@ void test_direct_mapped_invalid_offset(CACHE_LAYER &cache_layer, sc_signal<uint3
     sc_start(10, SC_NS);
     cout << "Testing DirectMappedInvalidOffset" << endl;
 
-    assert_bool("DirectMappedInvalidOffset", true, cache_layer.error);
+    assert_bool_layer("DirectMappedInvalidOffset", true, cache_layer.error);
 }
 
 void test_fully_associative_read_hit(CACHE_LAYER &cache_layer, sc_signal<uint32_t> &addr, sc_signal<bool> &r, sc_signal<bool> &w,
@@ -164,11 +164,11 @@ void test_fully_associative_read_hit(CACHE_LAYER &cache_layer, sc_signal<uint32_
     sc_start(10, SC_NS);
     r.write(false);
 
-    assert_bool("FullyAssociativeHit_Miss", false, miss.read());
-    assert_equal("FullyAssociativeHit_Data", 0x87654321, data.read());
-    assert_bool("FullyAssociativeHit_Ready", true, ready.read());
+    assert_bool_layer("FullyAssociativeHit_Miss", false, miss.read());
+    assert_equal_layer("FullyAssociativeHit_Data", 0x87654321, data.read());
+    assert_bool_layer("FullyAssociativeHit_Ready", true, ready.read());
     // Überprüfe LRU-Update
-    assert_equal("FullyAssociativeHit_LRU", 1, cache_layer.lru_list.front());
+    assert_equal_layer("FullyAssociativeHit_LRU", 1, cache_layer.lru_list.front());
 }
 
 void test_fully_associative_read_miss(CACHE_LAYER &cache_layer, sc_signal<uint32_t> &addr, sc_signal<bool> &r, sc_signal<bool> &w,
@@ -186,8 +186,8 @@ void test_fully_associative_read_miss(CACHE_LAYER &cache_layer, sc_signal<uint32
     sc_start(10, SC_NS);
     r.write(false);
 
-    assert_bool("FullyAssociativeMiss_Miss", true, miss.read());
-    assert_bool("FullyAssociativeMiss_Ready", true, ready.read());
+    assert_bool_layer("FullyAssociativeMiss_Miss", true, miss.read());
+    assert_bool_layer("FullyAssociativeMiss_Ready", true, ready.read());
 }
 
 void test_fully_associative_invalid_offset(CACHE_LAYER &cache_layer, sc_signal<uint32_t> &addr, sc_signal<bool> &r, sc_signal<bool> &w)
@@ -200,7 +200,7 @@ void test_fully_associative_invalid_offset(CACHE_LAYER &cache_layer, sc_signal<u
     w.write(false);
     sc_start(10, SC_NS);
 
-    assert_bool("FullyAssociativeInvalidOffset", true, cache_layer.error);
+    assert_bool_layer("FullyAssociativeInvalidOffset", true, cache_layer.error);
 }
 
 void test_direct_mapped_write_hit(CACHE_LAYER &cache_layer, sc_signal<uint32_t> &addr, sc_signal<uint32_t> &wdata, sc_signal<bool> &r, sc_signal<bool> &w, sc_signal<bool> &miss, sc_signal<bool> &ready)
@@ -223,9 +223,9 @@ void test_direct_mapped_write_hit(CACHE_LAYER &cache_layer, sc_signal<uint32_t> 
     sc_start(10, SC_NS);
     w.write(false);
 
-    assert_bool("DirectMappedWriteHit_Miss", false, miss.read());
-    assert_bool("DirectMappedWriteHit_Ready", true, ready.read());
-    assert_bool("DirectMappedWriteHit_NoError", false, cache_layer.error);
+    assert_bool_layer("DirectMappedWriteHit_Miss", false, miss.read());
+    assert_bool_layer("DirectMappedWriteHit_Ready", true, ready.read());
+    assert_bool_layer("DirectMappedWriteHit_NoError", false, cache_layer.error);
     
     std::vector<uint8_t> expected_data(16, 0);
     expected_data[8] = 0x21; // LSB
@@ -250,9 +250,9 @@ void test_direct_mapped_write_miss(CACHE_LAYER &cache_layer, sc_signal<uint32_t>
     sc_start(10, SC_NS);
     w.write(false);
 
-    assert_bool("DirectMappedWriteMiss_Miss", true, miss.read());
-    assert_bool("DirectMappedWriteMiss_Ready", true, ready.read());
-    assert_bool("DirectMappedWriteMiss_NoError", false, cache_layer.error);
+    assert_bool_layer("DirectMappedWriteMiss_Miss", true, miss.read());
+    assert_bool_layer("DirectMappedWriteMiss_Ready", true, ready.read());
+    assert_bool_layer("DirectMappedWriteMiss_NoError", false, cache_layer.error);
 
     std::vector<uint8_t> expected_data(16, 0); // zero-filled cacheline to check if data is not changed
     assert_data("DirectMappedWriteMiss_Data", expected_data, cache_layer.cache_memory[0].data);
@@ -269,7 +269,7 @@ void test_direct_mapped_write_invalid_offset(CACHE_LAYER &cache_layer, sc_signal
     sc_start(10, SC_NS);
     w.write(false);
 
-    assert_bool("DirectMappedWriteInvalidOffset", true, cache_layer.error);
+    assert_bool_layer("DirectMappedWriteInvalidOffset", true, cache_layer.error);
 }
 
 void test_fully_associative_write_hit(CACHE_LAYER &cache_layer, sc_signal<uint32_t> &addr, sc_signal<uint32_t> &wdata, sc_signal<bool> &r, sc_signal<bool> &w, sc_signal<bool> &miss, sc_signal<bool> &ready)
@@ -295,10 +295,10 @@ void test_fully_associative_write_hit(CACHE_LAYER &cache_layer, sc_signal<uint32
     sc_start(10, SC_NS);
     w.write(false);
 
-    assert_bool("FullyAssociativeWriteHit_Miss", false, miss.read());
-    assert_bool("FullyAssociativeWriteHit_Ready", true, ready.read());
-    assert_bool("FullyAssociativeWriteHit_NoError", false, cache_layer.error);
-    assert_equal("FullyAssociativeWriteHit_LRU", 1, cache_layer.lru_list.front());
+    assert_bool_layer("FullyAssociativeWriteHit_Miss", false, miss.read());
+    assert_bool_layer("FullyAssociativeWriteHit_Ready", true, ready.read());
+    assert_bool_layer("FullyAssociativeWriteHit_NoError", false, cache_layer.error);
+    assert_equal_layer("FullyAssociativeWriteHit_LRU", 1, cache_layer.lru_list.front());
 
     std::vector<uint8_t> expected_data(16, 0);
     expected_data[8] = 0x21;
@@ -323,9 +323,9 @@ void test_fully_associative_write_miss(CACHE_LAYER &cache_layer, sc_signal<uint3
     sc_start(10, SC_NS);
     w.write(false);
 
-    assert_bool("FullyAssociativeWriteMiss_Miss", true, miss.read());
-    assert_bool("FullyAssociativeWriteMiss_Ready", true, ready.read());
-    assert_bool("FullyAssociativeWriteMiss_NoError", false, cache_layer.error);
+    assert_bool_layer("FullyAssociativeWriteMiss_Miss", true, miss.read());
+    assert_bool_layer("FullyAssociativeWriteMiss_Ready", true, ready.read());
+    assert_bool_layer("FullyAssociativeWriteMiss_NoError", false, cache_layer.error);
 
     std::vector<uint8_t> expected_data(16, 0);
     assert_data("FullyAssociativeWriteMiss_Data", expected_data, cache_layer.cache_memory[0].data);
@@ -342,7 +342,7 @@ void test_fully_associative_write_invalid_offset(CACHE_LAYER &cache_layer, sc_si
     sc_start(10, SC_NS);
     w.write(false);
 
-    assert_bool("FullyAssociativeWriteInvalidOffset", true, cache_layer.error);
+    assert_bool_layer("FullyAssociativeWriteInvalidOffset", true, cache_layer.error);
 }
 
 void test_write_cacheline_direct_mapped(CACHE_LAYER &cache_layer)
@@ -357,8 +357,8 @@ void test_write_cacheline_direct_mapped(CACHE_LAYER &cache_layer)
     cache_layer.set_memory(std::vector<CacheLine>(4, {0, false, std::vector<uint8_t>(16)}), {}, {});
     cache_layer.write_cacheline(0x00010008, mem_data); // Tag=0x400, Index=0
 
-    assert_equal("WriteDataDirectMapped_Tag", 0x00010008 >> 6, cache_layer.cache_memory[0].tag);
-    assert_bool("WriteDataDirectMapped_Valid", true, cache_layer.cache_memory[0].valid);
+    assert_equal_layer("WriteDataDirectMapped_Tag", 0x00010008 >> 6, cache_layer.cache_memory[0].tag);
+    assert_bool_layer("WriteDataDirectMapped_Valid", true, cache_layer.cache_memory[0].valid);
     assert_data("WriteDataDirectMapped_Data", mem_data, cache_layer.cache_memory[0].data);
 }
 
@@ -382,12 +382,12 @@ void test_write_cacheline_fully_associative_not_full(CACHE_LAYER &cache_layer)
 
     cache_layer.write_cacheline(0x10000008, mem_data); // Tag=0x1000000
 
-    assert_equal("WriteDataFullyAssociativeNotFull_Size", 2, cache_layer.size);
-    assert_equal("WriteDataFullyAssociativeNotFull_LRUFront", 1, cache_layer.lru_list.front());
-    assert_equal("WriteDataFullyAssociativeNotFull_Tag", 0x10000008 >> 4, cache_layer.cache_memory[1].tag);
-    assert_bool("WriteDataFullyAssociativeNotFull_Valid", true, cache_layer.cache_memory[1].valid);
+    assert_equal_layer("WriteDataFullyAssociativeNotFull_Size", 2, cache_layer.size);
+    assert_equal_layer("WriteDataFullyAssociativeNotFull_LRUFront", 1, cache_layer.lru_list.front());
+    assert_equal_layer("WriteDataFullyAssociativeNotFull_Tag", 0x10000008 >> 4, cache_layer.cache_memory[1].tag);
+    assert_bool_layer("WriteDataFullyAssociativeNotFull_Valid", true, cache_layer.cache_memory[1].valid);
     assert_data("WriteDataFullyAssociativeNotFull_Data", mem_data, cache_layer.cache_memory[1].data);
-    assert_equal("WriteDataFullyAssociativeNotFull_LRUMap", 1, *cache_layer.lru_map[0x10000008 >> 4]);
+    assert_equal_layer("WriteDataFullyAssociativeNotFull_LRUMap", 1, *cache_layer.lru_map[0x10000008 >> 4]);
 }
 
 void test_write_data_from_main_memory_fully_associative_full(CACHE_LAYER &cache_layer)
@@ -413,13 +413,13 @@ void test_write_data_from_main_memory_fully_associative_full(CACHE_LAYER &cache_
 
     cache_layer.write_cacheline(0x20000008, mem_data); // Tag=0x2000000, LRU replace at index 3
 
-    assert_equal("WriteDataFullyAssociativeFull_Size", 4, cache_layer.size);
-    assert_equal("WriteDataFullyAssociativeFull_LRUFront", 3, cache_layer.lru_list.front());
-    assert_equal("WriteDataFullyAssociativeFull_Tag", 0x2000000, cache_layer.cache_memory[3].tag);
-    assert_bool("WriteDataFullyAssociativeFull_Valid", true, cache_layer.cache_memory[3].valid);
+    assert_equal_layer("WriteDataFullyAssociativeFull_Size", 4, cache_layer.size);
+    assert_equal_layer("WriteDataFullyAssociativeFull_LRUFront", 3, cache_layer.lru_list.front());
+    assert_equal_layer("WriteDataFullyAssociativeFull_Tag", 0x2000000, cache_layer.cache_memory[3].tag);
+    assert_bool_layer("WriteDataFullyAssociativeFull_Valid", true, cache_layer.cache_memory[3].valid);
     assert_data("WriteDataFullyAssociativeFull_Data", mem_data, cache_layer.cache_memory[3].data);
-    assert_equal("WriteDataFullyAssociativeFull_LRUMap", 3, *cache_layer.lru_map[0x2000000]);
-    assert_bool("WriteDataFullyAssociativeFull_LRUMapErased", false, cache_layer.lru_map.count(0x1000003) > 0);
+    assert_equal_layer("WriteDataFullyAssociativeFull_LRUMap", 3, *cache_layer.lru_map[0x2000000]);
+    assert_bool_layer("WriteDataFullyAssociativeFull_LRUMapErased", false, cache_layer.lru_map.count(0x1000003) > 0);
 }
 
 void test_write_cacheline_invalid_strategy(CACHE_LAYER &cache_layer)
@@ -427,7 +427,7 @@ void test_write_cacheline_invalid_strategy(CACHE_LAYER &cache_layer)
     cache_layer.mapping_strategy = 2; // Ungültig
     std::vector<uint8_t> mem_data(16, 0);
     cache_layer.write_cacheline(0x00010008, mem_data);
-    assert_bool("WriteDataInvalidStrategy", true, cache_layer.error);
+    assert_bool_layer("WriteDataInvalidStrategy", true, cache_layer.error);
 }
 
 void sc_main()
