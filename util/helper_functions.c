@@ -8,11 +8,11 @@
 void print_help() 
 {
     printf(
-        "Usage: ./cache [OPTIONS] input.csv\n"
+        "Usage: ./project [OPTIONS] requests.csv\n"
         "\n"
         "Simulate a cache system based on memory access requests from a CSV file.\n\n"
         "Required:\n"
-        "  input.csv                 CSV file with memory requests.\n\n"
+        "  requests.csv                 CSV file with memory requests.\n\n"
         "Standard options:\n"
         "  -c, --cycles NUM          Number of simulation cycles [default: %u]\n"
         "  -f, --tf FILE             Output trace file (optional)\n"
@@ -28,7 +28,7 @@ void print_help()
         "  -e, --num-cache-levels   |  Number of cache levels (1–3) (default: %u)\n"
         "  -S, --mapping-strategy   |  Cache mapping strategy (0=Direct-mapped, 1=Fully associative.) (default: %u)\n\n"
         "Examples:\n"
-        "  ./cache -c 1000 -f trace.txt --num-lines-l1 64 --mapping-strategy 1 input.csv\n",
+        "  ./project -c 1000 -f trace.txt --num-lines-l1 64 --mapping-strategy 1 requests.csv\n",
         CYCLES,
         CACHE_LINE_SIZE,
         NUM_LINES_L1,
@@ -43,12 +43,25 @@ void print_help()
 }
 
 /*
+    * @brief            Fast bit function to check if the number is power of 2
+    *
+    * @param number     Any positive number
+    * 
+    * @return           true if the number is power of 2 and false otherwise
+    *
+*/
+bool is_power_of_two(uint32_t number)
+{
+    return number != 0 && (number & (number - 1)) == 0;
+}
+
+/*
    * @brief               Debug function to print all of the requests to console output
    *
    * @param requests      Pointer to requests array
    * @param size          Size of requests array 
    * 
-   * @return        void
+   * @return              void
 */
 void print_requests(Request* requests, size_t size){
     for (size_t i = 0; i < size; i++) {
@@ -91,7 +104,12 @@ char* read_file_to_buffer(const char *filename)
 
     /* Check if file exists */
     if (stat(filename, &sb) == -1){
-        fprintf(stderr,"Access denied\n");
+        if (errno == EACCES) {
+            fprintf(stderr,"Access denied to: %s\n", filename);
+        } else {
+            fprintf(stderr, "File does not exist: %s\n", filename);
+            errno = ENOENT;
+        }
         return NULL;
     }
     
@@ -99,6 +117,7 @@ char* read_file_to_buffer(const char *filename)
     if (!S_ISREG(sb.st_mode))
     {
         fprintf(stderr,"Not a regular file\n");
+        errno = EISDIR;
         return NULL;
     }
 
@@ -120,6 +139,7 @@ char* read_file_to_buffer(const char *filename)
             free(content);
             fclose(csv_file);
             fprintf(stderr, "Memory allocation failed\n");
+            errno = ENOMEM;
             return NULL; 
         }
         content = tmp;
@@ -131,6 +151,7 @@ char* read_file_to_buffer(const char *filename)
         free(content);
         fclose(csv_file);
         fprintf(stderr, "Error reading file %s\n", filename);
+        errno = EIO;
         return NULL;
     }
 
@@ -142,6 +163,7 @@ char* read_file_to_buffer(const char *filename)
     } else {
         /* File is empty */
         fprintf(stderr, "File is empty\n");
+        errno = ENODATA;
         return NULL;
     }
 

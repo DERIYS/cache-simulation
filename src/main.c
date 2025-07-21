@@ -65,7 +65,7 @@ int main(int argc, char** argv)
 
                 /* Passes argument for verification, cycles as uint32, where the argument will be stored, and string indicating error, if needed */
                 if (!parse_unsigned_int32(optarg, &cycles, "cycles value")) {
-                    return EX_DATAERR;
+                    return EINVAL;
                 }
 
                 DEBUG_PRINT("Cycles set\n");
@@ -75,7 +75,7 @@ int main(int argc, char** argv)
             case 'f':
                 traceFileName = optarg;
                 if (!(traceFileName)) {
-                    return EX_DATAERR;
+                    return EINVAL;
                 }
                 DEBUG_PRINT("Tracefile set\n");
                 break;
@@ -94,7 +94,14 @@ int main(int argc, char** argv)
 
                 /* Passes argument for verification, cachelineSize as uint32, where the argument will be stored, and string indicating error, if needed */
                 if (!parse_unsigned_int32(optarg, &cachelineSize, "cache line size")) {
-                    return EX_DATAERR;
+                    return EINVAL;
+                }
+
+                /* CachelineSize should be power of 2 */
+                if (!is_power_of_two(cachelineSize))
+                {
+                    fprintf(stderr, "Number of cacheline size is not a power of 2: %u\n", cachelineSize);
+                    return EINVAL;
                 }
 
                 DEBUG_PRINT("Cacheline size set\n");
@@ -105,7 +112,14 @@ int main(int argc, char** argv)
                 
                 /* Passes argument for verification, numLinesL1 as uint32, where the argument will be stored, and string indicating error, if needed */
                 if (!parse_unsigned_int32(optarg, &numLinesL1, "cache L1 line value")) {
-                    return EX_DATAERR;
+                    return EINVAL;
+                }
+
+                /* Number of L1 cache lines should be power of 2*/
+                if (!is_power_of_two(numLinesL1))
+                {
+                    fprintf(stderr, "Number of L1 cache lines is not a power of 2: %u\n", numLinesL1);
+                    return EINVAL;
                 }
           
                 DEBUG_PRINT("Cache L1 lines set\n");
@@ -116,7 +130,14 @@ int main(int argc, char** argv)
                 
                 /* Passes argument for verification, numLinesL2 as uint32, where the argument will be stored, and string indicating error, if needed */
                 if (!parse_unsigned_int32(optarg, &numLinesL2, "cache L2 line value")) {
-                    return EX_DATAERR;
+                    return EINVAL;
+                }
+
+                /* Number of L2 cache lines should be power of 2*/
+                if (!is_power_of_two(numLinesL2))
+                {
+                    fprintf(stderr, "Number of L2 cache lines is not a power of 2: %u\n", numLinesL2);
+                    return EINVAL;
                 }
 
                 DEBUG_PRINT("Cache L2 lines set\n");
@@ -127,7 +148,14 @@ int main(int argc, char** argv)
                 
                 /* Passes argument for verification, numLinesL3 as uint32, where the argument will be stored, and string indicating error, if needed */
                 if (!parse_unsigned_int32(optarg,&numLinesL3, "cache L3 line value")) {
-                    return EX_DATAERR;
+                    return EINVAL;
+                }
+
+                /* Number of L3 cache lines should be power of 2*/
+                if (!is_power_of_two(numLinesL3))
+                {
+                    fprintf(stderr, "Number of L3 cache lines is not a power of 3: %u\n", numLinesL3);
+                    return EINVAL;
                 }
 
                 DEBUG_PRINT("Cache L3 lines set\n");
@@ -138,7 +166,7 @@ int main(int argc, char** argv)
                 
                 /* Passes argument for verification, latencyCacheL1 as uint32, where the argument will be stored, and string indicating error, if needed */
                 if (!parse_unsigned_int32(optarg, &latencyCacheL1, "cache L1 latency value")) {
-                    return EX_DATAERR;
+                    return EINVAL;
                 }
 
                 DEBUG_PRINT("Cache L1 latency set\n");
@@ -149,7 +177,7 @@ int main(int argc, char** argv)
                 
                 /* Passes argument for verification, latencyCacheL2 as uint32, where the argument will be stored, and string indicating error, if needed */
                 if (!parse_unsigned_int32(optarg,  &latencyCacheL2, "cache L2 latency value")) {
-                    return EX_DATAERR;
+                    return EINVAL;
                 }
 
                 DEBUG_PRINT("Cache L2 latency set\n");
@@ -160,7 +188,7 @@ int main(int argc, char** argv)
 
                 /* Passes argument for verification, latencyCache3 as uint32, where the argument will be stored, and string indicating error, if needed */
                 if (!parse_unsigned_int32(optarg, &latencyCacheL3, "cache L3 latency value")) {
-                    return EX_DATAERR;
+                    return EINVAL;
                 }
 
                 DEBUG_PRINT("Cache L3 latency set\n");
@@ -171,12 +199,12 @@ int main(int argc, char** argv)
 
                 /* Passes argument for verification, numCacheLevels as uint8, where the argument will be stored, and string indicating error, if needed */
                 if (!parse_unsigned_int8(optarg, &numCacheLevels, "number of cache levels")) {
-                    return EX_DATAERR;
+                    return EINVAL;
                 }
 
                 if (numCacheLevels < 1 || numCacheLevels > 3) {
                     fprintf(stderr, "Number of caches is between 1 and 3.\n");
-                    return EX_DATAERR;
+                    return EINVAL;
                 }
 
                 DEBUG_PRINT("Cache levels set\n");
@@ -187,12 +215,12 @@ int main(int argc, char** argv)
                 
                 /* Passes argument for verification, mappingStrategy as uint8, where the argument will be stored, and string indicating error, if needed */
                 if (!parse_unsigned_int8(optarg, &mappingStrategy,"mapping strategy")) {
-                    return EX_DATAERR;
+                    return EINVAL;
                 }
 
                 if (mappingStrategy < 0 || mappingStrategy > 1){
                     fprintf(stderr,"Mapping strategy is either 0 (Dirrect-mapped) or 1 (Fully-associative).\n");
-                    return EX_DATAERR;
+                    return EINVAL;
                 }
 
                 DEBUG_PRINT("Mapping strategy set\n");
@@ -232,7 +260,7 @@ int main(int argc, char** argv)
     char* content = read_file_to_buffer(filename);
     if (!content){
         /*Failed to write in buffer*/
-        return EPERM;
+        return errno;
     }
 
     /* Count how many requests in order to allocate memory accordingly */
@@ -248,14 +276,12 @@ int main(int argc, char** argv)
         /* In the case of error, cleanup and return with an error*/
         free(requests);
         free(content);
-        return EPERM;
+        return EX_DATAERR;
     }
 
     /* If debug mode enabled, print requests to the console output */
-    debug ? (void)print_requests(requests, requests_size) : (void)0;
+    if (debug) print_requests(requests, requests_size);
     
-    
-
     /* Run C++ SystemC simulation */
     Result result = run_simulation(
                 cycles,
@@ -273,8 +299,32 @@ int main(int argc, char** argv)
               requests
     );
 
-    printf("\n\n\t\t======SIMULATION RESULTS======\n"); 
-    printf("\t\tCycles: %u\n \t\tHits: %u\n \t\tMisses: %u\n\n", result.cycles, result.hits, result.misses);
+    printf("\n\t\t======SIMULATION PARAMETRS======\n\
+            \tCycles: %u\n\
+            \tTracefile: %s\n\
+            \tNumber of cache levels: %u\n\
+            \tCacheline size: %u\n\
+            \tNumber of L1 lines: %u\n\
+            \tNumber of L2 lines: %u\n\
+            \tNumber of L3 lines: %u\n\
+            \tLatency of L1 cache: %u\n\
+            \tLatency of L2 cache: %u\n\
+            \tLatency of L3 cache: %u\n\
+            \tMapping strategy: %s\n",
+            cycles,
+            traceFileName ? traceFileName : "none",
+            numCacheLevels,
+            cachelineSize,
+            numLinesL1,
+            numLinesL2,
+            numLinesL3,
+            latencyCacheL1,
+            latencyCacheL2,
+            latencyCacheL3,
+            mappingStrategy == 1 ? "Fully associative" : "Direct mapped"); 
+
+    printf("\n\n\t\t======SIMULATION RESULTS======\n\t\tCycles: %u\n\t\tHits: %u\n\t\tMisses: %u\n\n",
+             result.cycles, result.hits, result.misses);
 
     /* Normal cleanup */
     free(requests);
