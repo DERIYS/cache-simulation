@@ -95,8 +95,8 @@ $(TARGET): $(C_OBJS) $(CPP_OBJS)
 	$(CXX) $(CXXFLAGS) $(C_OBJS) $(CPP_OBJS) $(LDFLAGS) -o $(TARGET)
 
 # Rule to link tests objects to executable
-$(CACHE_TEST_TARGET): $(CPP_OBJS) $(TEST_CPP_OBJS)
-	$(CXX) $(CXXFLAGS) $(CPP_OBJS) $(TEST_CPP_OBJS) $(LDFLAGS) -o $(CACHE_TEST_TARGET)
+$(CACHE_TEST_TARGET): $(TEST_CPP_OBJS)
+	$(CXX) $(CXXFLAGS) $(TEST_CPP_OBJS) $(LDFLAGS) -o $(CACHE_TEST_TARGET)
 
 
 COVERAGE_FLAGS = -fprofile-arcs -ftest-coverage
@@ -125,7 +125,7 @@ run-debug: $(TARGET)
 	./project -d --cycles 1000 debug.csv
 
 run-cpp-tests: $(CACHE_TEST_TARGET)
-	./bin/cache_test
+	./cache_test
 
 run-python-tests:
 	python3 test/cache_tests.py

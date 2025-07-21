@@ -4,6 +4,8 @@
 #include "structs/request.h"
 #include "structs/result.h"
 
+#define ENABLE_DEBUG
+
 #ifdef __cplusplus
 extern "C" {
 #endif
