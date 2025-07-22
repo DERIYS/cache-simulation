@@ -9,10 +9,18 @@
 #include "../include/structs/default.h"
 #include "../include/structs/debug.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+bool is_valid_filename(const char *filename);
 void print_help();
 bool is_power_of_two(uint32_t number);
-bool is_valid_filename(const char *filename);
-char* read_file_to_buffer(const char* filename);
 void print_requests(Request* requests, size_t size);
+char* read_file_to_buffer(const char *filename);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // HELPER_FUNCTION_H

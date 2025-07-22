@@ -7,6 +7,7 @@ class CacheProgramTests(unittest.TestCase):
         self.binary = "./project"
 
         self.valid_file = "test/inputs/valid_data.csv"
+        self.expected_values_file = "test/inputs/expected_values.csv"
         self.invalid_files = [
             "test/inputs/invalid_data1.csv",
             "test/inputs/invalid_data2.csv",
@@ -22,9 +23,23 @@ class CacheProgramTests(unittest.TestCase):
             "test/inputs/invalid_data12.csv",
             "test/inputs/invalid_data13.csv",
             "test/inputs/invalid_data14.csv",
-            "test/inputs/invalid_data15.csv"
+            "test/inputs/invalid_data15.csv",
+            "test/inputs/invalid_data16.csv"
         ]
         self.nonexistent_file = "test/inputs/does_not_exist.csv"
+
+        self.flags = [
+            "-c",
+            "-C",
+            "-L",
+            "-M",
+            "-N",
+            "-l",
+            "-m",
+            "-n",
+            "-e",
+            "-S",
+        ]
 
     def run_cache(self, args):
         return subprocess.run(
@@ -56,8 +71,10 @@ class CacheProgramTests(unittest.TestCase):
         result = self.run_cache(["-c", "0", self.valid_file])
         self.assertNotEqual(result.returncode, 0)
 
-    def test_set_cacheline_and_levels(self):
+    def test_set_all(self):
         result = self.run_cache([
+            "-d",
+            "-f", "tracefie",
             "-C", "64",
             "-L", "128",
             "-M", "256",
@@ -67,13 +84,15 @@ class CacheProgramTests(unittest.TestCase):
             "-n", "3",
             "-e", "3",
             "-S", "1",
-            self.valid_file
+            "-t",
+            self.expected_values_file
         ])
         self.assertEqual(result.returncode, 0)
 
     def test_negative_cycles(self):
         result = self.run_cache([
             "-d",
+            "-t",
             "-c", "-1000",
             self.valid_file
         ])
@@ -119,6 +138,27 @@ class CacheProgramTests(unittest.TestCase):
         ])
         self.assertIn("Mapping strategy", result.stderr)
         self.assertNotEqual(result.returncode, 0)
+
+    def test_invalid_input_for_each_flag(self):
+        for flag in self.flags:
+            with self.subTest(flag=flag):
+                result = self.run_cache([flag, "10a", self.valid_file])
+                self.assertNotEqual(result.returncode, 0)
+
+    def test_invalid_flag(self):
+        result = self.run_cache([
+            "-P", "2",
+            self.valid_file
+        ])
+
+        self.assertNotEqual(result.returncode, 0)
+
+    def test_direct_mapped(self):
+        result = self.run_cache([
+            "-S", "0",
+            self.valid_file
+        ])
+        self.assertEqual(result.returncode,0)
 
     def test_no_input_file(self):
         result = self.run_cache([

@@ -1,8 +1,10 @@
 #include "../include/simulation.hpp"
+#include <iostream>
+#include "../util/helper_functions.h"
 #include "../include/cache.hpp"
 #include "../include/structs/test.h"
-#include "../util/helper_functions.h"
-#include <iostream>
+#include "../include/structs/debug.h"
+
 
 void print_simulation_results(Result result, uint32_t cycles, const char* tracefile,
                               uint8_t numCacheLevels, uint32_t cachelineSize,
