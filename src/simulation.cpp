@@ -174,7 +174,7 @@ Result run_simulation(
             DEBUG_PRINT("Clock %u: \n", result.cycles);
             
             if (result.cycles >= cycles) {
-                DEBUG_PRINT("Limit of cycles reached, stopping simulation.\n");
+                printf("Limit of cycles reached, stopping simulation.\n");
                 return result;
             }
             result.cycles++;
@@ -183,9 +183,9 @@ Result run_simulation(
 
         } while (!ready.read());
 
-        DEBUG_PRINT("SIMULATION: Read data: %u\n", cache.rdata.read());
+        // DEBUG_PRINT("SIMULATION: Read data: %u\n", cache.rdata.read());
         if (test) {
-            if (debug) cache.print_caches();
+            // if (debug) cache.print_caches();
             if (!request.w && request.data != cache.rdata.read()) {
                 print_simulation_results(result, cycles, tracefile,
                                     numCacheLevels, cachelineSize,
