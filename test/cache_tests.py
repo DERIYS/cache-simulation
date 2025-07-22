@@ -96,6 +96,29 @@ class CacheProgramTests(unittest.TestCase):
         self.assertIn("Buffer error", result.stderr)
         self.assertNotEqual(result.returncode,0)
 
+    def test_linesize_not_power_of_2(self):
+        result = self.run_cache([
+            "-C", "7",
+            self.valid_file
+        ])
+        self.asserIn("not power of 2")
+        self.assertNotEqual(result.returncode, 0)
+    
+    def test_false_cache_levels(self):
+        result = self.run_cache([
+            "-e", "4",
+            self.valid_file
+        ])
+        self.assertIn("is between 1 and 3")
+        self.assertNotEqual(result.returncode, 0)
+
+    def test_false_cache_levels(self):
+        result = self.run_cache([
+            "-S", "2",
+            self.valid_file
+        ])
+        self.assertIn("is between 1 and 3")
+        self.assertNotEqual(result.returncode, 0)
 
     def test_no_input_file(self):
         result = self.run_cache([
@@ -103,6 +126,7 @@ class CacheProgramTests(unittest.TestCase):
         ])
         self.assertIn("No input", result.stderr)
         self.assertNotEqual(result.returncode, 0)
+
 
 if __name__ == '__main__':
     unittest.main()
