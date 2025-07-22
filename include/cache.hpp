@@ -351,7 +351,7 @@ SC_MODULE(CACHE)
 
   // Returns byte in cache-level: level, cache line: line_index, at position: index
   // Assumes that level is in range [0;2], where 0 represents L1, 1 represents L2, and 2 represents L3.
-  uint8_t getCacheLineContent(uint32_t level, uint32_t line_index, uint32_t index)
+  uint8_t get_cache_line_content(uint32_t level, uint32_t line_index, uint32_t index)
   {
     if (level < 0 || level >= num_cache_levels)
       throw std::runtime_error("Number of cache levels must be in range [1;3] in method get_cacheline_content.\n");

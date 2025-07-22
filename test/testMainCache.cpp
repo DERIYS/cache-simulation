@@ -2,6 +2,7 @@
 #include <functional>
 #include <string>
 #include "../include/cache.hpp"
+#include "../include/main_memory.hpp"
 
 
 // Helper function to compare integers
@@ -43,7 +44,7 @@ void assert_throws(const std::string& test_name, const std::function<void()>& fu
     }
 }
 
-void cacheReadMiss(CACHE &cache, sc_signal<uint32_t> &addr,sc_signal<uint32_t> &rdata,  sc_signal<bool> &r, 
+void cacheReadMiss(CACHE &cache,  sc_signal<uint32_t> &addr,sc_signal<uint32_t> &rdata,  sc_signal<bool> &r, 
     sc_signal<bool> &w, sc_signal<bool> &miss, sc_signal<bool> &ready,uint32_t rdata_expected){
         w.write(false);
         r.write(true);
@@ -100,10 +101,10 @@ void cacheWriteHit(CACHE &cache, sc_signal<uint32_t> &addr,sc_signal<uint32_t> &
         assert_bool("cacheWriteHit miss",false  ,miss.read());
         assert_bool("cacheWriteHit ready",true,ready.read());
 
-        assert_equal_one_line("cacheReadAfterWriteHit L1[0]",0xd4,cache.get_cacheline_content(1,0,0));
-        assert_equal_one_line("cacheReadAfterWriteHit L1[1]",0xd3,cache.get_cacheline_content(1,0,1));
-        assert_equal_one_line("cacheReadAfterWriteHit L1[2]",0xd2,cache.get_cacheline_content(1,0,2));
-        assert_equal("cacheReadAfterWriteHit L1[3]",0xd1,cache.get_cacheline_content(1,0,3));
+        assert_equal_one_line("cacheReadAfterWriteHit L1[0]",0xd4,cache.get_cache_line_content(1,0,0));
+        assert_equal_one_line("cacheReadAfterWriteHit L1[1]",0xd3,cache.get_cache_line_content(1,0,1));
+        assert_equal_one_line("cacheReadAfterWriteHit L1[2]",0xd2,cache.get_cache_line_content(1,0,2));
+        assert_equal("cacheReadAfterWriteHit L1[3]",0xd1,cache.get_cache_line_content(1,0,3));
 }
 
 void cacheWriteMiss(CACHE &cache, sc_signal<uint32_t> &addr,sc_signal<uint32_t> &wdata,  sc_signal<bool> &r, 
@@ -127,48 +128,96 @@ void print_caches(int number,CACHE& cache){
 
 int sc_main(int argc, char *argv[])
 {
-    sc_clock clk("clk", 10, SC_NS);
-    sc_signal<uint32_t> addr, wdata;
-    sc_signal<bool> r, w, miss, ready;
-    sc_signal<uint32_t> rdata;
+     sc_clock clk("clk", 10, SC_NS);
+    // sc_signal<uint32_t> addr, wdata;
+    // sc_signal<bool> r, w, miss, ready;
+    // sc_signal<uint32_t> rdata;
     //name,numCahceLevels,cachelineSize,numLinesL1,2,3,latencyCacheL1,2,3, mappingStrategy
  
     CACHE cache("cache",3,8,2,4,8,2,2,3,0);
+    MAIN_MEMORY main_memory("main_memory",8);
 
     // cache.L[0]->test_mode=true;cache.L[1]->test_mode=true;cache.L[2]->test_mode=true;
     // cache.test=true;
     //CACHE_LAYER cache("cache", 1, 4, 16, 0); // Default: direct-mapped
+    // cache.clk(clk);
+    // cache.addr(addr);
+    // cache.wdata(wdata);
+    // cache.r(r);
+    // cache.w(w);
+    // cache.miss(miss);
+    // cache.ready(ready);////
+    // cache.rdata(rdata);
+    sc_signal<uint32_t> addr, wdata;
+    sc_signal<bool> r, w;
+
+    sc_signal<uint32_t> rdata;
+    sc_signal<bool> ready, miss,stop;
+
     cache.clk(clk);
     cache.addr(addr);
     cache.wdata(wdata);
     cache.r(r);
     cache.w(w);
-    cache.miss(miss);
-    cache.ready(ready);////
-    cache.rdata(rdata);
 
-    cache.set_memory(0,0xA1A2A3A4);
-    cache.set_memory(4,0xB1B2B3B4);
-    cache.set_memory(8,0xC1C2C3C4);
-    cache.set_memory(0xC,0x12345678);
-    cache.set_memory(0x10, 0xabababab);
-    cache.set_memory(0x14,0xabcdefab);
-    cache.set_memory(0x18,0xa1aab1bb);
-    cache.set_memory(0x1C,0x11111111);
-    cache.set_memory(0x20, 0x123c123f);
-    cache.set_memory(0x24,0xffffffff);
-    cache.set_memory(0x28,0xf1c42071);
-    cache.set_memory(0x2C,0x22222222);
-    cache.set_memory(0x30, 0xaefaefea);
-    cache.set_memory(0x34,0xedaedaff);
-    cache.set_memory(0x38,0x45454545);
-    cache.set_memory(0x3C,0xda913da);
-    cache.set_memory(0x40, 0x838995);
-    cache.set_memory(0x44,0x838547);
-    cache.set_memory(0x48,0x7);
+    cache.rdata(rdata);
+    cache.ready(ready);
+    cache.miss(miss);
+
+
+    main_memory.clk(clk);
+   
+
+    sc_signal<uint32_t> mem_addr_sig, mem_wdata_sig,mem_rdata;
+    std::vector<sc_signal<uint8_t>> mem_cacheline_sig(8);
+    sc_signal<bool> mem_r_sig, mem_w_sig, mem_ready_sig;
+
+    main_memory.addr(mem_addr_sig);
+    cache.mem_addr(mem_addr_sig);
+    main_memory.wdata(mem_wdata_sig);
+    cache.mem_wdata(mem_wdata_sig);
+    main_memory.r(mem_r_sig);
+    cache.mem_r(mem_r_sig);
+    main_memory.w(mem_w_sig);
+    cache.mem_w(mem_w_sig);
+    for (int i = 0; i < 8; i++)
+    {
+      main_memory.cacheline[i](mem_cacheline_sig[i]);
+      cache.mem_cacheline[i](mem_cacheline_sig[i]);
+    }
+
+    main_memory.ready(mem_ready_sig);
+    cache.mem_ready(mem_ready_sig);
+    
+    //main_memory.ready(ready);
+    main_memory.stop(stop);
+    cache.mem_stop(stop);
+
+    main_memory.rdata(mem_rdata);
+
+
+    main_memory.set(0,0xA1A2A3A4);
+    main_memory.set(4,0xB1B2B3B4);
+    main_memory.set(8,0xC1C2C3C4);
+    main_memory.set(0xC,0x12345678);
+    main_memory.set(0x10, 0xabababab);
+    main_memory.set(0x14,0xabcdefab);
+    main_memory.set(0x18,0xa1aab1bb);
+    main_memory.set(0x1C,0x11111111);
+    main_memory.set(0x20, 0x123c123f);
+    main_memory.set(0x24,0xffffffff);
+    main_memory.set(0x28,0xf1c42071);
+    main_memory.set(0x2C,0x22222222);
+    main_memory.set(0x30, 0xaefaefea);
+    main_memory.set(0x34,0xedaedaff);
+    main_memory.set(0x38,0x45454545);
+    main_memory.set(0x3C,0xda913da);
+    main_memory.set(0x40, 0x838995);
+    main_memory.set(0x44,0x838547);
+    main_memory.set(0x48,0x7);
 
     std::cout<<"main_memory init:\n";
-    cache.main_memory.print();
+    main_memory.print();
     std::cout<<"\n";
 
     //read addr=0, write a cacheline to each cache-level
@@ -197,7 +246,7 @@ int sc_main(int argc, char *argv[])
     addr.write(8);wdata.write(0xe1e2e3e4);
     cacheWriteMiss(cache,addr,wdata,r,w,miss,ready);
     print_caches(3,cache);
-    cache.main_memory.print();
+    main_memory.print();
 
 
     std::cout<<"fill all caches in order using readMiss,check fifo princip in all caches\n";
