@@ -48,11 +48,10 @@ void cacheReadMiss(CACHE &cache,  sc_signal<uint32_t> &addr,sc_signal<uint32_t> 
     sc_signal<bool> &w, sc_signal<bool> &miss, sc_signal<bool> &ready,uint32_t rdata_expected){
         w.write(false);
         r.write(true);
-        sc_start(120,SC_NS);
+        sc_start(10,SC_NS);
         r.write(false);
-        // sc_start(140,SC_NS);//2 cycle wait cache,1 c. wait memory,10 c. latency memory,+2 c.
-          
-        //sc_start(165, SC_NS);
+        while(!ready.read())
+            sc_start(10,SC_NS);
         assert_equal("cacheReadMiss rdata",rdata_expected,rdata.read());
         assert_bool("cacheReadMiss miss",true,miss.read());
         assert_bool("cacheReadMiss ready",true,ready.read());
@@ -60,14 +59,12 @@ void cacheReadMiss(CACHE &cache,  sc_signal<uint32_t> &addr,sc_signal<uint32_t> 
 
 void cacheReadHit(CACHE &cache, sc_signal<uint32_t> &addr,sc_signal<uint32_t> &rdata,  sc_signal<bool> &r, 
     sc_signal<bool> &w, sc_signal<bool> &miss, sc_signal<bool> &ready,uint32_t rdata_expected){
-
-        // addr.write(0);
         w.write(false);
         r.write(true);
-        //  sc_start(20,SC_NS);
-        //  r.write(false);
-        sc_start(100, SC_NS);//l1 latency =1
+        sc_start(10,SC_NS);
         r.write(false);
+        while(!ready.read())
+            sc_start(10,SC_NS);
         assert_equal("cacheReadHit rdata",rdata_expected,rdata.read());
         assert_bool("cacheReadHit miss",false,miss.read());
         assert_bool("cacheReadHit ready",true,ready.read());
@@ -79,9 +76,10 @@ void cacheReadSpatialLocalityHit(CACHE &cache, sc_signal<uint32_t> &addr,sc_sign
         addr.write(0x4);
         w.write(false);
         r.write(true);
-        // sc_start(10,SC_NS);
-        // r.write(false);
-        sc_start(70, SC_NS);//l1 latency =1
+        sc_start(10,SC_NS);
+        r.write(false);
+        while(!ready.read())
+            sc_start(10,SC_NS);
 
         assert_equal("cacheReadSpatialLocalityHit rdata",0xB1B2B3B4,rdata.read());
         assert_bool("cacheReadSpatialLocalityHit miss",false  ,miss.read());
@@ -93,11 +91,10 @@ void cacheWriteHit(CACHE &cache, sc_signal<uint32_t> &addr,sc_signal<uint32_t> &
         // addr.write(0);
         w.write(true);
         r.write(false);
-        // wdata.write(0xd1d2d3d4);
-        // sc_start(10,SC_NS);
-        // w.write(false);
-        sc_start(100,SC_NS);//2 cycle wait cache,1 c. wait memory,10 c. latency memory,+2 c.
+        sc_start(10,SC_NS);
         w.write(false);
+        while(!ready.read())
+            sc_start(10,SC_NS);
         assert_bool("cacheWriteHit miss",false  ,miss.read());
         assert_bool("cacheWriteHit ready",true,ready.read());
 
@@ -112,9 +109,10 @@ void cacheWriteMiss(CACHE &cache, sc_signal<uint32_t> &addr,sc_signal<uint32_t> 
         // addr.write(0x8);
         w.write(true);
         r.write(false);
-        // wdata.write(0xe1e2e3e4);
-        sc_start(140,SC_NS);
+        sc_start(10,SC_NS);
         w.write(false);
+        while(!ready.read())
+            sc_start(10,SC_NS);
         // sc_start(140,SC_NS);//2 cycle wait cache,1 c. wait memory,10 c. latency memory,+2 c.
         assert_bool("cacheWriteMiss miss",true  ,miss.read());
         assert_bool("cacheWriteMiss ready ",true,ready.read());
@@ -134,7 +132,7 @@ int sc_main(int argc, char *argv[])
     // sc_signal<uint32_t> rdata;
     //name,numCahceLevels,cachelineSize,numLinesL1,2,3,latencyCacheL1,2,3, mappingStrategy
  
-    CACHE cache("cache",3,8,2,4,8,2,2,3,0);
+    CACHE cache("cache",3,8,2,4,8,8,8,8,1);
     MAIN_MEMORY main_memory("main_memory",8);
 
     // cache.L[0]->test_mode=true;cache.L[1]->test_mode=true;cache.L[2]->test_mode=true;
@@ -225,6 +223,7 @@ int sc_main(int argc, char *argv[])
     addr.write(0);
     cacheReadMiss(cache,addr,rdata,r,w,miss,ready,0xa1a2a3a4);
     print_caches(3,cache);
+    //sc_start(10,SC_NS);
     
     //read addr=0 from cache L1
     std::cout<<"read 0x0, cache hit in L1: \n";
@@ -305,5 +304,4 @@ int sc_main(int argc, char *argv[])
     cacheReadHit(cache,addr,rdata,r,w,miss,ready,0x838547);
 
     return 0;
-
 }
