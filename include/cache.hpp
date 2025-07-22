@@ -186,6 +186,7 @@ SC_MODULE(CACHE)
 
       ready.write(true);
       miss.write(cache_miss_out.read());
+      wait_zero_cachetime();
       if (!miss.read()) rdata.write(cache_data_out.read());
       DEBUG_PRINT("MAIN: Output signals set: ready=%s, miss=%s, rdata=%u\n", ready.read() ? "true" : "false", miss.read() ? "true" : "false", rdata.read());
     }
@@ -212,6 +213,7 @@ SC_MODULE(CACHE)
     // mem_r.write(true); // setting read signal to true, so that MM will start reading data
     wait(); // wait for the next clock cycle so that memory and cache levels start processing the request
     mem_r.write(false); // setting read signal to false, so that MM will not read data after this request if not needed
+    r_mux_in.write(false);
     wait(SC_ZERO_TIME);
 
     for (uint32_t i = 0; i < num_cache_levels; i++)
@@ -226,11 +228,12 @@ SC_MODULE(CACHE)
         DEBUG_PRINT("MAIN: Read data in CACHE_LAYER[%d]: %u\n", i + 1, L[i]->data.read());
 
         hit = true;
-        
+        DEBUG_PRINT("MAIN: Miss before multiplexer select: %s, ready: %s, rdata: %u\n", miss.read() ? "true" : "false", ready.read() ? "true" : "false", rdata.read());
         miss_mux_select.write(i);
         ready_mux_select.write(i);
         data_mux_select.write(i);
         wait_zero_cachetime();
+        DEBUG_PRINT("MAIN: Miss after multiplexer select: %s, ready: %s, rdata: %u\n", miss.read() ? "true" : "false", ready.read() ? "true" : "false", rdata.read());
 
         for (uint32_t j = 0; j < num_cache_levels; j++)
         {
@@ -259,6 +262,7 @@ SC_MODULE(CACHE)
       // set output data
       rdata.write(L[0]->extract_word(cacheline, addr.read() & (cacheline_size - 1)));
     }
+    DEBUG_PRINT("MAIN: Read operation completed. Miss: %s, Ready: %s, Rdata: %u\n", miss.read() ? "true" : "false", ready.read() ? "true" : "false", rdata.read());
   }
 
   // Helper function to get cacheline from main memory for read/write operations
