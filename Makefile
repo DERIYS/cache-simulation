@@ -119,10 +119,13 @@ clean:
 
 
 run: $(TARGET)
-	./project --cycles 1000 requests.csv
+	./project requests.csv
 
 run-debug: $(TARGET)
-	./project -d --cycles 1000 debug.csv
+	./project -d requests.csv
+
+run-test: $(TARGET)
+	./project -t debug.csv
 
 run-cpp-tests: $(CACHE_TEST_TARGET)
 	./cache_test
@@ -130,6 +133,6 @@ run-cpp-tests: $(CACHE_TEST_TARGET)
 run-python-tests:
 	python3 test/cache_tests.py
 
-run-tests: run-cpp-tests run-python-tests
+run-unit-tests: run-cpp-tests run-python-tests
 
 .PHONY: all debug release clean coverage coverage-report run run-debug run-cpp-tests run-python-tests run-tests

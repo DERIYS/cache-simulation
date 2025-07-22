@@ -220,13 +220,13 @@ Request form_single_request(char* type, char* address, char* data, bool* ok)
     uint32_t req_data;
 
     /* Check data by R request. If debug mode is off, then R request should not include data */
-    if (isR && *data != '\0' && !debug){
+    if (isR && *data != '\0' && !test){
         printf("Invalid data --- no data expected by read\n");
         return req;
 
     /* If debug mode is enabled, then CSV also includes expected values, so we write them 
         Following condition for R is triggered only in debug mode */  
-    } else if (isR && debug) {
+    } else if (isR && test) {
 
         /* Attention */
         /* In this case "data" variable name could be misleading. 
@@ -234,7 +234,7 @@ Request form_single_request(char* type, char* address, char* data, bool* ok)
 
         /* if debug is enabled, then there should be third field by R request */
         if (*data == '\0'){
-            printf("Missing expected value for read request in debugger mode\n");
+            printf("Missing expected value for read request in test mode\n");
             return req;
         }
 

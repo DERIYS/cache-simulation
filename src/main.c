@@ -1,6 +1,11 @@
 #include <getopt.h>
 #include <sysexits.h>
 
+/* This macro ensures that debug.h uses appropriate DEBUG_PRINT function */
+#define ENABLE_DEBUG
+
+#include "../include/structs/debug.h"
+#include "../include/structs/test.h"
 #include "../include/simulation.hpp"
 #include "../include/parsers/csv_parser.h"
 #include "../include/parsers/numeric_parser.h"
@@ -8,6 +13,9 @@
 
 /* Debug flag */
 bool debug = false;
+
+/* Test  flag */
+bool test  = false;
 
 int main(int argc, char** argv)
 {
@@ -25,7 +33,8 @@ int main(int argc, char** argv)
         {"latency-cache-l3", required_argument, 0, 'n'},
         {"num-cache-levels", required_argument, 0, 'e'},
         {"mapping-strategy", required_argument, 0, 'S'},
-        {"debug"           , no_argument      , 0, 'd'},
+        {"debug"           , no_argument      , 0, 'd'}, /* additional flag for debug printing */
+        {"expected-values" , no_argument      , 0, 't'}, /* additional flag for testing. It requires expected values for R request in request, so we can compare actual values from cache with expected */
         {0                 , 0                , 0,  0 }
     };   
 
@@ -46,7 +55,7 @@ int main(int argc, char** argv)
        Supports both long (--cycles, --tf) and short (-c, -f) options.  */
     int opt;
     int option_index = 0;
-    while ((opt = getopt_long(argc,argv, "c:f:hC:L:M:N:l:m:n:e:S:d", long_options, &option_index)) != -1)
+    while ((opt = getopt_long(argc,argv, "c:f:hC:L:M:N:l:m:n:e:S:dt", long_options, &option_index)) != -1)
     {
 
         /* Handle each option using its long/short flag. 
@@ -235,6 +244,13 @@ int main(int argc, char** argv)
                 DEBUG_PRINT("Debug set\n");
                 break;
 
+            case 't':
+                
+                /* Set test flag as true for testing purposes */
+                test = true;
+
+                DEBUG_PRINT("Test set\n");
+                break;
             /* Unrecognized option */
             case '?':
                 if (optopt) {
