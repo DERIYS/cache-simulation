@@ -1,6 +1,7 @@
 #include "../include/simulation.hpp"
 #include "../include/cache.hpp"
-#include "../test/cache_layer_unit_tests.cpp"
+#include "../include/structs/test.h"
+#include "../util/helper_functions.h"
 #include <iostream>
 
 void print_simulation_results(Result result, uint32_t cycles, const char* tracefile,
@@ -141,7 +142,7 @@ Result run_simulation(
 
     sc_trace_file *trace = NULL;
 
-    if (tracefile != NULL)
+    if (tracefile != NULL && is_valid_filename(tracefile))
     {
         trace = sc_create_vcd_trace_file(tracefile);
         sc_trace(trace, clk, "clk");
@@ -154,8 +155,7 @@ Result run_simulation(
         sc_trace(trace, miss, "miss");
     }
 
-    size_t request_index;
-    for (request_index = 0; request_index < numRequests; request_index++) {
+    for (size_t request_index = 0; request_index < numRequests; request_index++) {
         request = requests[request_index];
 
         DEBUG_PRINT("SIMULATION: Request %zu: type=%s, addr = 0x%08X, data=0x%08X\n", request_index + 1,
@@ -182,8 +182,8 @@ Result run_simulation(
         } while (!ready.read());
 
         DEBUG_PRINT("SIMULATION: Read data: %u\n", cache.rdata.read());
-        if (debug) {
-            cache.print_caches();
+        if (test) {
+            if (debug) cache.print_caches();
             if (!request.w && request.data != cache.rdata.read()) {
                 print_simulation_results(result, cycles, tracefile,
                                     numCacheLevels, cachelineSize,
@@ -206,6 +206,8 @@ Result run_simulation(
     if (tracefile != NULL && trace != NULL)
         sc_close_vcd_trace_file(trace);
     
+    cache.print_caches();
+
     print_simulation_results(result, cycles, tracefile,
                               numCacheLevels, cachelineSize,
                               numLinesL1, numLinesL2,
@@ -213,9 +215,7 @@ Result run_simulation(
                               latencyCacheL2, latencyCacheL3,
                               mappingStrategy);
 
-    cache.print_caches();
-
-    printf("\t\tSIMULATION: Simulation finished successfully with %.2f%% efficiency\n", 100.0 * static_cast<double>(request_index * 100) / static_cast<double>(result.cycles) - 100.0);
+    printf("\t\tSIMULATION: Simulation finished successfully with %.2f hit rate and %.2f%% efficiency\n", static_cast<double>(result.hits)/static_cast<double>(numRequests), 100.0 * static_cast<double>(numRequests * 100) / static_cast<double>(result.cycles) - 100.0);
 
     return result;
 }
