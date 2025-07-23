@@ -26,9 +26,11 @@ void print_help()
         "  -m, --latency-cache-l2   |  Latency of L2 cache in cycles (default: %u)\n"
         "  -n, --latency-cache-l3   |  Latency of L3 cache in cycles (default: %u)\n"
         "  -e, --num-cache-levels   |  Number of cache levels (1–3) (default: %u)\n"
-        "  -S, --mapping-strategy   |  Cache mapping strategy (0=Direct-mapped, 1=Fully associative.) (default: %u)\n\n"
+        "  -S, --mapping-strategy   |  Cache mapping strategy (0=Direct-mapped, 1=Fully associative.) (default: %u)\n"
+        "  -d, --debug              |  Debug mode for detailed output by simulation\n"
+        "  -t, --test               |  Test mode for expected values in requests, to validate the correctness of simulation\n\n"
         "Examples:\n"
-        "  ./project -c 1000 -f trace.txt --num-lines-l1 64 --mapping-strategy 1 requests.csv\n",
+        "  ./project -c 1000 -f tracefile --num-lines-l1 64 --mapping-strategy 1 requests.csv\n",
         CYCLES,
         CACHE_LINE_SIZE,
         NUM_LINES_L1,
