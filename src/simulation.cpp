@@ -174,7 +174,7 @@ Result run_simulation(
             DEBUG_PRINT("Clock %u: \n", result.cycles);
             
             if (result.cycles >= cycles) {
-                DEBUG_PRINT("Limit of cycles reached, stopping simulation.\n");
+                printf("Limit of cycles reached, stopping simulation.\n");
                 return result;
             }
             result.cycles++;
