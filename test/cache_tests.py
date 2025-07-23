@@ -75,7 +75,7 @@ class CacheProgramTests(unittest.TestCase):
     def test_set_all(self):
         result = self.run_cache([
             "-d",
-            "-f", "tracefie",
+            "-f", "tracefile",
             "-C", "64",
             "-L", "128",
             "-M", "256",

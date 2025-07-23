@@ -116,6 +116,8 @@ clean:
 	rm -rf $(BIN_DIR)
 	rm -f src/*.gcda src/*.gcno coverage.info
 	rm -rf coverage-report
+	rm -f *.vcd
+	rm -f tracefile 
 
 
 run: $(TARGET)

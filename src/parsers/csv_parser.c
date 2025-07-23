@@ -1,7 +1,7 @@
 #include "../../include/parsers/csv_parser.h"
 #include <ctype.h>
 
-#define MAX_ALLOWED_BUFFER 12
+#define MAX_ALLOWED_BUFFER 14
 
 /*
    * @brief               Splits the content by line and returns pointer to new line in content
