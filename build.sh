@@ -1,4 +1,4 @@
 echo "Test script start!"
 make clean
-make run
+make run-test
 echo "Build finished"
