@@ -1,6 +1,7 @@
 #include "../../include/parsers/csv_parser.h"
 #include <ctype.h>
 
+#define MAX_ALLOWED_BUFFER 12
 
 /*
    * @brief               Splits the content by line and returns pointer to new line in content
@@ -59,7 +60,8 @@ char* split_next_line(const char* content, char* type, char* address, char* data
     /* Extract type */
     char* token = strtok(line_copy, delimiters);
     if (token) {
-        strcpy(type, token);
+        strncpy(type, token, 1);
+        type[1] = '\0';
     } 
     else {
         fprintf(stderr, "Failed to parse type\n");
@@ -70,7 +72,8 @@ char* split_next_line(const char* content, char* type, char* address, char* data
     /* Extract address */
     token = strtok(NULL, delimiters);
     if (token) {
-        strcpy(address, token);
+        strncpy(address, token, MAX_ALLOWED_BUFFER - 1);
+        address[MAX_ALLOWED_BUFFER - 1] = '\0';
     }
     else { 
         fprintf(stderr, "Failed to parse address\n");
@@ -81,7 +84,8 @@ char* split_next_line(const char* content, char* type, char* address, char* data
     /* Extract data (may be optional) */
     token = strtok(NULL, delimiters);
     if (token) {
-        strcpy(data, token);
+        strncpy(data, token, MAX_ALLOWED_BUFFER - 1);
+        token[MAX_ALLOWED_BUFFER - 1] = '\0';
     } 
     else {
         *data = '\0';
@@ -163,7 +167,7 @@ uint32_t validate_value(char* someValue)
     }
     /* Don't accept negative values */
     if (value < 0) {
-        fprintf(stderr, "Negative data is not allowed: %lu\n", value);
+        fprintf(stderr, "Negative data is not allowed: %li\n", value);
         return VALUE_ERROR;
     }
 
@@ -293,8 +297,8 @@ int form_requests(char* content, Request* requests)
 
     /* Allocate memory for type, address and data of a single request */
     char* type    = (char*) calloc(2, sizeof(char));
-    char* address = (char*) calloc(21,sizeof(char));
-    char* data    = (char*) calloc(21,sizeof(char));
+    char* address = (char*) calloc(MAX_ALLOWED_BUFFER,sizeof(char));
+    char* data    = (char*) calloc(MAX_ALLOWED_BUFFER,sizeof(char));
 
     /* Loop through content */
     size_t request_counter = 0;

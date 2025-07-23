@@ -24,7 +24,8 @@ class CacheProgramTests(unittest.TestCase):
             "test/inputs/invalid_data13.csv",
             "test/inputs/invalid_data14.csv",
             "test/inputs/invalid_data15.csv",
-            "test/inputs/invalid_data16.csv"
+            "test/inputs/invalid_data16.csv",
+            "test/inputs/restricted.csv"
         ]
         self.nonexistent_file = "test/inputs/does_not_exist.csv"
 
