@@ -127,7 +127,7 @@ run-debug: $(TARGET)
 	./project -d requests.csv
 
 run-test: $(TARGET)
-	./project -t debug.csv
+	./project -t test.csv
 
 run-cpp-tests: $(CACHE_TEST_TARGET)
 	./cache_test

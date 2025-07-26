@@ -93,7 +93,6 @@ class CacheProgramTests(unittest.TestCase):
     def test_negative_cycles(self):
         result = self.run_cache([
             "-d",
-            "-t",
             "-c", "-1000",
             self.valid_file
         ])
