@@ -174,6 +174,14 @@ Result run_simulation(
             DEBUG_PRINT("Clock %u: \n", result.cycles);
             
             if (result.cycles >= cycles) {
+                cache.print_caches();
+
+                print_simulation_results(result, cycles, tracefile,
+                              numCacheLevels, cachelineSize,
+                              numLinesL1, numLinesL2,
+                              numLinesL3, latencyCacheL1,
+                              latencyCacheL2, latencyCacheL3,
+                              mappingStrategy);
                 printf("Limit of cycles reached, stopping simulation.\n");
                 return result;
             }
