@@ -42,9 +42,6 @@ $(BIN_DIR)/%.o: test/%.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 
-# assignment task file
-HEADERS := helper_functions.h simulation.hpp csv_parser.h structs.h numeric_parser.h cache.hpp multiplexer.hpp cache_layer.hpp main_memory.hpp
-
 # target name
 TARGET := project
 
