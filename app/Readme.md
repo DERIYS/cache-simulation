@@ -3,7 +3,7 @@ Dieses Programm ist eine einfache grafische Benutzeroberfläche (GUI) für die K
 Die Benutzeroberfläche ermöglicht die komfortable Konfiguration von Simulationseinstellungen sowie das Starten und mehrfache Ausführen der Simulation.
 
 ## Wichtige Hinweise
-* Diese Anwendung verwendet das gleiche ausführbare Programm für die Simulation, das sich im Root-Verzeichnis des Projekts befindet (../../project).
+* Diese Anwendung verwendet das gleiche ausführbare Programm für die Simulation, das sich im Root-Verzeichnis des Projekts befindet (../project)
 
 * Das Verzeichnis app dient ausschließlich als grafische Repräsentation und zur Steuerung der Simulation über eine Menüführung in der Konsole.
 
