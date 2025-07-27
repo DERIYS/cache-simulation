@@ -1,7 +1,7 @@
 #ifndef DEFAULT_H
 #define DEFAULT_H
 
-//CHANGE AS NEEDED
+/*CHANGE AS NEEDED*/
 enum DefaultSimulationValues {
     CYCLES           = 10000000 ,
     NUM_CACHE_LEVELS = 3        ,
