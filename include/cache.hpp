@@ -239,7 +239,6 @@ SC_MODULE(CACHE)
         {
           DEBUG_PRINT("MAIN: Setting stop signal for CACHE_LAYER[%d] to %s\n", j + 1, j == i ? "false" : "true");
           if (j != i) L[j]->stop = true; // stop waiting the latency in other cache levels
-          else L[j]->idle = true; // set cache level with hit to idle in the next clock
         }
         mem_stop.write(true); // stop waiting the latency in main memory
         

@@ -3,7 +3,7 @@
 
 //CHANGE AS NEEDED
 enum DefaultSimulationValues {
-    CYCLES           = 1000000000 ,
+    CYCLES           = 10000000 ,
     NUM_CACHE_LEVELS = 3        ,
     CACHE_LINE_SIZE  = 64       ,
     NUM_LINES_L1     = 512      ,

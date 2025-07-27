@@ -32,9 +32,6 @@ SC_MODULE(CACHE_LAYER)
   bool test_mode = false; // If true, the cache is in test mode and does not throw exceptions
   bool error = false;     // If true, the cache has encountered an error
   bool stop = false;      // If true, the cache stops waiting the latency
-  bool idle = false;      // If true, the cache layer is idle and does not proccess requests for one clock tick.
-                          // Set to true only if this cache layer had hit first and needs to wait 
-                          // one clock cycle before main cache sets the next request's signals
 
   // Number of actually occupied cache lines.
   // Used only with fully-associative mapping strategy to pick an index for new cacheline or determining if the memory is full
@@ -93,9 +90,9 @@ SC_MODULE(CACHE_LAYER)
   {
     while (true) {
       wait();
-      DEBUG_PRINT("CACHE_LAYER[%u]: Behaviour thread running... (stop=%s, idle=%s)\n", layer_index, stop ? "true" : "false", idle ? "true" : "false");
+      DEBUG_PRINT("CACHE_LAYER[%u]: Behaviour thread running... (stop=%s)\n", layer_index, stop ? "true" : "false");
       reset_signals();
-      if (!idle && (r.read() || w.read()))
+      if (r.read() || w.read())
       {
         DEBUG_PRINT("CACHE_LAYER[%u]: Accessing cache with address: %u, r: %u, w: %u\n", layer_index, addr.read(), r.read(), w.read());
         if (mapping_strategy == DIRECT_MAPPED) access_direct_mapped();
@@ -122,7 +119,6 @@ SC_MODULE(CACHE_LAYER)
         }
       }
       DEBUG_PRINT("CACHE_LAYER[%u]: Waiting for next clock cycle...\n", layer_index);
-      idle = false; // Reset idle at the end to simulate one idle clock cycle
     }
   }
 
