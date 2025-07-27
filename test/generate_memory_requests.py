@@ -95,7 +95,7 @@ for i in range(N):
 
 
 # Write to CSV file
-with open("../debug.csv" if test else "../requests.csv", "w") as f:
+with open("../test.csv" if test else "../requests.csv", "w") as f:
     f.write("\n".join(csv_entries))
 
 print("CSV file 'memory_requests.csv' has been generated. Total write requests: ", write_requests, " Total read requests:", read_requests)
