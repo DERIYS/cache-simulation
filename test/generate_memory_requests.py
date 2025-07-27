@@ -1,42 +1,30 @@
+# This script generates memory requests for matrix multiplication
+# It creates a CSV file with read and write requests for matrices A, B, and C, simulating the memory operations 
+# of a matrix multiplication algorithm.
+#
+# It can be run in two modes: test mode (generates expected read data) and normal mode (no expected data)
+# The generated CSV file can be used to test the cache simulation on real requests from a real algorithm
+
 def int_to_hex(value):
     return f"0x{value:08x}"
 
 N = int(input("Enter the size of the matrices: "))
-test = int(input("Enter 1 for test mode, 0 for normal mode: "))
+test = int(input("Enter 1 for test mode (generates expected read data with read requests), 0 for normal mode: "))
 
 base_A = 0x00000000
 base_B = base_A + N*N*4
 base_C = base_B + N*N*4
 
-print(f"Base address for A: {int_to_hex(base_A)}")
-print(f"Base address for B: {int_to_hex(base_B)}")
-print(f"Base address for C: {int_to_hex(base_C)}")
-
 def get_address(base, i, j, N):
     return base + (i * N + j) * 4
 
-A = [
-    [N * i + j + 1 for j in range(N)] for i in range(N)
-]
+A = [[N * i + j + 1 for j in range(N)] for i in range(N)]
 
-B = [
-    [1 if i == j else 0 for j in range(N)] for i in range(N)
-]
+B = [[1 if i == j else 0 for j in range(N)] for i in range(N)] # Identity matrix for simplicity
 
-print("Matrix A:")
-for row in A:
-    print(row)
-
-print("\nMatrix B:")
-for row in B:
-    print(row)
-
-C = [[0 for _ in range(N)] for _ in range(N)]
+C = [[0 for _ in range(N)] for _ in range(N)] # Result matrix initialized to zero
 
 csv_entries = []
-
-global write_requests
-global read_requests
 
 write_requests = 0
 read_requests = 0
@@ -92,10 +80,11 @@ for i in range(N):
         make_read_request(addr_C, value_C)
         read_requests += 1
         
-
+filename = "test.csv" if test else "requests.csv"
 
 # Write to CSV file
-with open("../test.csv" if test else "../requests.csv", "w") as f:
+with open("../" + filename, "w") as f:
     f.write("\n".join(csv_entries))
 
-print("CSV file 'memory_requests.csv' has been generated. Total write requests: ", write_requests, " Total read requests:", read_requests)
+print(f"CSV file '{filename}' in the repository's root has been generated. Total requests: {write_requests + read_requests} ({read_requests} reads and {write_requests} writes)\n\n" + 
+      "Simply rerun the simulation with \"make run-test\" or \"make run\" command depending on which option you chose before.\n")
