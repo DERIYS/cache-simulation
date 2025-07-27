@@ -306,7 +306,7 @@ int form_requests(char* content, Request* requests)
         /* Try to store type, address and data from a single line and return pointer to the next line */
         content = split_next_line(content, type, address, data);
 
-        /* If a parse error happes, free resources and return an error */
+        /* If a parse error happens, free resources and return an error */
         if (content == PARSE_ERROR){
             free(type);
             free(address);

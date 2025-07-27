@@ -62,8 +62,8 @@ int main(int argc, char** argv)
            All numeric inputs are validated and rejected in the case of negative values or invalid formats.
            Programm exits with meaningfull error. */
 
-        /* Attention: following options parsing for numeric values heavily relies on parse_unsigned_int function.
-                      For a better understanding of its usage and behaviour please check src/numeric_parser.c  */
+        /* Attention: following options parsing for numeric values heavily relie on parse_unsigned_int functions.
+                      For a better understanding of its usage and behaviour please check src/parsers  */
 
         switch (opt)
         {
