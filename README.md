@@ -7,7 +7,7 @@ It implements a **multi-level cache simulator** in **SystemC**, capable of simul
 The simulator processes memory access requests from CSV files, handles cache hits and misses, and retrieves data from a simulated main memory when necessary.
 
 ---
-![alt text](image.png)
+![alt text](/util/image.png)
 
 ---
 
