@@ -2,7 +2,7 @@
 
 ## Overview
 
-This project was developed as the final assignment for TUM's **Fundamentals of Computer Architecture** course.  
+This project was developed as the final assignment for TUM's **Grundlagenpraktikum: Rechnerarchitektur (IN0005)** course.  
 It implements a **multi-level cache simulator** in **SystemC**, capable of simulating different cache configurations, mapping strategies, and performance metrics.  
 The simulator processes memory access requests from CSV files, handles cache hits and misses, and retrieves data from a simulated main memory when necessary.
 
@@ -34,16 +34,6 @@ The simulator processes memory access requests from CSV files, handles cache hit
 
 ---
 
-## Performance Analysis
-
-Using a generated memory access trace from a **30×30 matrix multiplication**:
-
-- **Requests**: 58,500 total (3,600 writes, 54,900 reads)
-- **Hit Rate**: 99.7%
-- **Performance**: 539% faster than without cache
-
----
-
 ## How to Build & Run
 The simulator requires an .csv file contatining memory requests in the following format:
 | Type | Address  | Data |
@@ -54,13 +44,15 @@ The simulator requires an .csv file contatining memory requests in the following
 ||...|
 
 
-There is an example `requests.csv` file in the repository's root that simulates a 10x10 matrix multiplication memory access trace.
-### 1. Prerequisites
+There is an example `requests.csv` file in the repository's root that simulates a 10x10 matrix multiplication memory access trace. 
+
+The default values for cache parameters can be configured in `default.h`.
+### Prerequisites
 - [SystemC](https://www.accellera.org/downloads/standards/systemc) installed on your system
-- The environment variable `SYSTEMC_HOME` **must** be set to your SystemC installation path  
-  Example:
+- The environment variable `SYSTEMC_HOME` **must** be set to your SystemC installation path:
   ```bash
   export SYSTEMC_HOME=/path/to/systemc
+### Build & run
 1. **Build & run the project**
     ```bash
    make run
@@ -76,7 +68,7 @@ There is an example `requests.csv` file in the repository's root that simulates 
 
 - **[Safie Emiramzaieva](https://github.com/safie-e)** – Main cache module, inter-module communication, integration, testing
 
-- **[Lev Franko](https://github.com/DERIYS)** – Cache layer logic, search algorithms, LRU replacement, inter-module communication, stress testing
+- **[Lev Franko](https://github.com/DERIYS)** – Cache layer logic, search algorithms, LRU replacement, inter-module communication, integration, testing
 
 - **[Roman Kupar](https://github.com/roman-kupar)** – CSV parsing, CLI framework, CLI GUI, automated testing, C/C++ integration
 
